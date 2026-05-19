@@ -109,17 +109,22 @@ VOLTAGE_DIVIDER_FACTOR = 2.0   # we used two equal resistors (10k/10k)
 def voltage_to_turbidity(adc_voltage):
     """
     Convert ADS1115 voltage (after divider) to turbidity in NTU.
-    Multiplies back by divider factor to get real sensor voltage first.
+    Uses linear calibration based on two measured points:
+      3.75V -> 5 NTU   (clear tap water)
+      3.28V -> 500 NTU (brownish muddy water)
+    Adjust these values after calibration with known NTU solutions.
     """
     real_voltage = adc_voltage * VOLTAGE_DIVIDER_FACTOR
 
-    if real_voltage >= 4.2:
-        return 0.0
-    elif real_voltage <= 2.5:
-        return 3000.0
-    else:
-        ntu = -1120.4 * real_voltage**2 + 5742.3 * real_voltage - 4352.9
-        return max(ntu, 0.0)
+    # Calibration points
+    v_clear, ntu_clear = 3.75, 5.0
+    v_muddy, ntu_muddy = 3.28, 500.0
+
+    # Linear interpolation
+    slope = (ntu_muddy - ntu_clear) / (v_muddy - v_clear)
+    ntu = ntu_clear + slope * (real_voltage - v_clear)
+
+    return max(round(ntu, 1), 0.0)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
