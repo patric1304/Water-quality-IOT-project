@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script: TDS sensor (SEN0244 via ADS1115) + DS18B20 temperature
+Test script: TDS (SEN0244) + Turbidity (SEN0189) via ADS1115 + DS18B20 temperature
 Run with: python3 test_sensors.py
 """
 
@@ -93,12 +93,42 @@ def voltage_to_tds(voltage_v, temperature_c=25.0):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Turbidity helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+# SEN0189 output is 0-4.5V (5V powered), divided by 2 via 10kΩ/10kΩ divider
+# So ADS1115 sees 0-2.25V. We multiply back by 2 to get the real sensor voltage.
+# Turbidity (NTU) formula from DFRobot datasheet (based on real sensor voltage):
+#   voltage > 4.2V → 0 NTU (clear water)
+#   voltage < 2.5V → 3000 NTU (very turbid)
+#   otherwise      → -1120.4 * V² + 5742.3 * V - 4352.9
+
+VOLTAGE_DIVIDER_FACTOR = 2.0   # we used two equal resistors (10k/10k)
+
+
+def voltage_to_turbidity(adc_voltage):
+    """
+    Convert ADS1115 voltage (after divider) to turbidity in NTU.
+    Multiplies back by divider factor to get real sensor voltage first.
+    """
+    real_voltage = adc_voltage * VOLTAGE_DIVIDER_FACTOR
+
+    if real_voltage >= 4.2:
+        return 0.0
+    elif real_voltage <= 2.5:
+        return 3000.0
+    else:
+        ntu = -1120.4 * real_voltage**2 + 5742.3 * real_voltage - 4352.9
+        return max(ntu, 0.0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
     print("=" * 50)
-    print("  Water sensor test — TDS + Temperature")
+    print("  Water sensor test — TDS + Turbidity + Temp")
     print("=" * 50)
 
     # ── Set up ADS1115 ───────────────────────────────
@@ -107,7 +137,8 @@ def main():
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS1115(i2c)              # default address 0x48 (ADDR pin → GND)
         ads.gain = 1                    # ±4.096 V range — safe for 0-3.3 V signal
-        tds_channel = AnalogIn(ads, 0)  # A0
+        tds_channel        = AnalogIn(ads, 0)  # A0
+        turbidity_channel  = AnalogIn(ads, 1)  # A1
         print("  ADS1115 found  ✓")
     except Exception as e:
         print(f"  ADS1115 init failed: {e}")
@@ -128,8 +159,8 @@ def main():
 
     # ── Continuous reading loop ───────────────────────
     print("\nReading every 2 seconds. Press Ctrl+C to stop.\n")
-    print(f"{'Time':>8}  {'Temp (°C)':>10}  {'Voltage (V)':>12}  {'TDS (ppm)':>10}")
-    print("-" * 50)
+    print(f"{'Time':>8}  {'Temp (°C)':>10}  {'TDS (ppm)':>10}  {'Turbidity (NTU)':>16}")
+    print("-" * 60)
 
     try:
         while True:
@@ -140,20 +171,26 @@ def main():
                 temp_c = read_temperature(device_file)
                 temp_str = f"{temp_c:8.2f} °C" if temp_c is not None else "  ERROR   "
             else:
-                temp_c = 25.0          # fall back to reference temp
+                temp_c = 25.0
                 temp_str = "  N/A    "
 
-            # TDS (voltage → ppm, with temperature compensation if available)
+            # TDS
             try:
-                voltage = tds_channel.voltage
-                tds_ppm = voltage_to_tds(voltage, temp_c if temp_c else 25.0)
+                tds_voltage = tds_channel.voltage
+                tds_ppm = voltage_to_tds(tds_voltage, temp_c if temp_c else 25.0)
                 tds_str = f"{tds_ppm:8.1f} ppm"
-                volt_str = f"{voltage:9.4f} V"
-            except Exception as e:
-                tds_str  = "  ERROR  "
-                volt_str = "  ERROR  "
+            except Exception:
+                tds_str = "  ERROR  "
 
-            print(f"{timestamp}  {temp_str}  {volt_str}  {tds_str}")
+            # Turbidity
+            try:
+                turb_voltage = turbidity_channel.voltage
+                ntu = voltage_to_turbidity(turb_voltage)
+                turb_str = f"{ntu:10.1f} NTU"
+            except Exception:
+                turb_str = "  ERROR  "
+
+            print(f"{timestamp}  {temp_str}  {tds_str}  {turb_str}")
             time.sleep(2)
 
     except KeyboardInterrupt:
