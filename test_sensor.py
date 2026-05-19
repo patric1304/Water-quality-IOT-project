@@ -12,7 +12,7 @@ import os
 # Requires: pip3 install adafruit-circuitpython-ads1x15
 import board
 import busio
-import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.ads1115 import ADS1115
 from adafruit_ads1x15.analog_in import AnalogIn
 
 # ── DS18B20 via 1-Wire ───────────────────────────────────────────────────────
@@ -105,9 +105,9 @@ def main():
     print("\n[1] Initialising ADS1115 over I2C …")
     try:
         i2c = busio.I2C(board.SCL, board.SDA)
-        ads = ADS.ADS1115(i2c)          # default address 0x48 (ADDR pin → GND)
+        ads = ADS1115(i2c)              # default address 0x48 (ADDR pin → GND)
         ads.gain = 1                    # ±4.096 V range — safe for 0-3.3 V signal
-        tds_channel = AnalogIn(ads, ADS.P0)   # A0
+        tds_channel = AnalogIn(ads, 0)  # A0
         print("  ADS1115 found  ✓")
     except Exception as e:
         print(f"  ADS1115 init failed: {e}")
