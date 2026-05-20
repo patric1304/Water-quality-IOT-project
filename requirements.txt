@@ -1,0 +1,12 @@
+# Pi requirements — install with:
+#   pip3 install -r requirements.txt
+
+# I2C and ADS1115 ADC
+adafruit-blinka
+adafruit-circuitpython-ads1x15
+
+# MQTT client for AWS IoT Core (only needed when CLOUD_ENABLED = True)
+paho-mqtt
+
+# DS18B20 temperature sensor (only needed when sensor is physically connected)
+# DS18B20: w1thermsensor
