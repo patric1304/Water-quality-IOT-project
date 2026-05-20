@@ -89,7 +89,7 @@ class TDSSensor:
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c)
         ads.gain = 1   # ±4.096V range
-        self._channel = AnalogIn(ads, ADS.P1)   # TDS on channel A1
+        self._channel = AnalogIn(ads, ADS.P0)   # TDS on channel A0
 
     def _read_voltage(self) -> float:
         """Read and average multiple voltage samples to reduce noise."""
