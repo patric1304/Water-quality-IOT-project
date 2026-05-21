@@ -143,12 +143,9 @@ In your Render Web Service settings, go to **Environment** and add:
    ```
 3. Once deployed, your dashboard is at: `https://water-monitor.onrender.com/dashboard/`
 
-> [!WARNING]
-> **First deploy needs manual migration.** After the first deploy, go to your Render Web Service → **Shell** tab and run:
-> ```bash
-> python manage.py migrate
-> ```
-> This creates the database tables. Subsequent deploys won't need this unless you change models.
+
+> [!NOTE]
+> Migrations run automatically on every deploy via `entrypoint.sh` — no shell access needed.
 
 ### Step 6 — Verify deployment
 
