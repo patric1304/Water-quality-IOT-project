@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time water quality monitoring dashboard — pH, temperature, TDS, turbidity">
+    <title>Water Quality Monitor — Live Dashboard</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-card: rgba(16, 22, 40, 0.75);
+            --bg-card-hover: rgba(22, 30, 55, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #e8eaf0;
+            --text-secondary: #8b92a8;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #ef4444;
+            --accent-violet: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --glow-blue: rgba(59, 130, 246, 0.15);
+            --glow-emerald: rgba(16, 185, 129, 0.15);
+            --glow-amber: rgba(245, 158, 11, 0.15);
+            --glow-rose: rgba(239, 68, 68, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
+            z-index: 0;
+            animation: bgShift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgShift {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Header ──────────────────────────────────────── */
+        .dashboard-header {
+            padding: 2rem 0 1rem;
+            text-align: center;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.35rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.online { background: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald); }
+        .status-dot.offline { background: var(--accent-rose); box-shadow: 0 0 8px var(--accent-rose); animation: none; }
+        .status-dot.waiting { background: var(--accent-amber); box-shadow: 0 0 8px var(--accent-amber); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* ── Glassmorphism card ──────────────────────────── */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .glass-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        /* ── Sensor cards ────────────────────────────────── */
+        .sensor-card {
+            text-align: center;
+        }
+
+        .sensor-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            font-size: 1.4rem;
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover .sensor-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .sensor-icon.ph      { background: var(--glow-blue); color: var(--accent-blue); }
+        .sensor-icon.temp     { background: var(--glow-amber); color: var(--accent-amber); }
+        .sensor-icon.tds      { background: rgba(139, 92, 246, 0.15); color: var(--accent-violet); }
+        .sensor-icon.turbidity { background: var(--glow-emerald); color: var(--accent-emerald); }
+
+        .sensor-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .sensor-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .sensor-unit {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .sensor-range {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge.ok {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .status-badge.alert {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-rose);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            animation: alertPulse 1.5s ease-in-out infinite;
+        }
+
+        .status-badge.na {
+            background: rgba(139, 148, 172, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(139, 148, 172, 0.2);
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ── Chart cards ─────────────────────────────────── */
+        .chart-card {
+            min-height: 280px;
+        }
+
+        .chart-card .chart-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-card .chart-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 768px) {
+            .sensor-value { font-size: 1.75rem; }
+            .dashboard-header h1 { font-size: 1.35rem; }
+            .glass-card { padding: 1.25rem; }
+        }
+
+        /* ── Loading skeleton ────────────────────────────── */
+        .skeleton {
+            background: linear-gradient(90deg,
+                rgba(255,255,255,0.03) 25%,
+                rgba(255,255,255,0.08) 50%,
+                rgba(255,255,255,0.03) 75%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Fade-in animation ───────────────────────────── */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in:nth-child(1) { animation-delay: 0.05s; }
+        .fade-in:nth-child(2) { animation-delay: 0.1s; }
+        .fade-in:nth-child(3) { animation-delay: 0.15s; }
+        .fade-in:nth-child(4) { animation-delay: 0.2s; }
+
+        /* ── Value update flash ──────────────────────────── */
+        .flash {
+            animation: valueFlash 0.5s ease;
+        }
+
+        @keyframes valueFlash {
+            0% { opacity: 0.5; transform: scale(0.97); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ── No data overlay ─────────────────────────────── */
+        .no-data-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .no-data-overlay i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="container-lg py-2">
+
+            <!-- ── Header ─────────────────────────────────── -->
+            <header class="dashboard-header">
+                <h1><i class="bi bi-droplet-half"></i> Water Quality Monitor</h1>
+                <p class="subtitle">Real-time sensor data from Raspberry Pi</p>
+                <div class="status-bar">
+                    <span>
+                        <span id="connectionDot" class="status-dot waiting"></span>
+                        <span id="connectionText">Connecting…</span>
+                    </span>
+                    <span>
+                        <i class="bi bi-clock"></i>
+                        Last update: <span id="lastUpdate">—</span>
+                    </span>
+                    <span>
+                        <i class="bi bi-arrow-repeat"></i>
+                        Refresh: 10s
+                    </span>
+                </div>
+            </header>
+
+            <!-- ── Sensor cards ───────────────────────────── -->
+            <div class="row g-3 mb-4 mt-2">
+
+                <!-- pH Card -->
+                <div class="col-6 col-lg-3 fade-in">
+                    <div class="glass-card sensor-card" id="cardPh">
+                        <div class="sensor-icon ph">
+                            <i class="bi bi-moisture"></i>
+                        </div>
+                        <div class="sensor-label">pH Level</div>
+                        <div class="sensor-value" id="valuePh">—</div>
+                        <div class="sensor-unit">pH scale</div>
+                        <div id="badgePh" class="status-badge na">
+                            <i class="bi bi-dash-circle"></i> Waiting
+                        </div>
+                        <div class="sensor-range">Safe: 6.5 – 8.5</div>
+                    </div>
+                </div>
+
+                <!-- Temperature Card -->
+                <div class="col-6 col-lg-3 fade-in">
+                    <div class="glass-card sensor-card" id="cardTemp">
+                        <div class="sensor-icon temp">
+                            <i class="bi bi-thermometer-half"></i>
+                        </div>
+                        <div class="sensor-label">Temperature</div>
+                        <div class="sensor-value" id="valueTemp">—</div>
+                        <div class="sensor-unit">°C</div>
+                        <div id="badgeTemp" class="status-badge na">
+                            <i class="bi bi-dash-circle"></i> Waiting
+                        </div>
+                        <div class="sensor-range">Safe: 0 – 30 °C</div>
+                    </div>
+                </div>
+
+                <!-- TDS Card -->
+                <div class="col-6 col-lg-3 fade-in">
+                    <div class="glass-card sensor-card" id="cardTds">
+                        <div class="sensor-icon tds">
+                            <i class="bi bi-water"></i>
+                        </div>
+                        <div class="sensor-label">TDS</div>
+                        <div class="sensor-value" id="valueTds">—</div>
+                        <div class="sensor-unit">mg/L</div>
+                        <div id="badgeTds" class="status-badge na">
+                            <i class="bi bi-dash-circle"></i> Waiting
+                        </div>
+                        <div class="sensor-range">Safe: &lt; 500 mg/L</div>
+                    </div>
+                </div>
+
+                <!-- Turbidity Card -->
+                <div class="col-6 col-lg-3 fade-in">
+                    <div class="glass-card sensor-card" id="cardTurb">
+                        <div class="sensor-icon turbidity">
+                            <i class="bi bi-cloud-haze2"></i>
+                        </div>
+                        <div class="sensor-label">Turbidity</div>
+                        <div class="sensor-value" id="valueTurb">—</div>
+                        <div class="sensor-unit">NTU</div>
+                        <div id="badgeTurb" class="status-badge na">
+                            <i class="bi bi-dash-circle"></i> Waiting
+                        </div>
+                        <div class="sensor-range">Safe: &lt; 4 NTU</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Chart cards ────────────────────────────── -->
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-6 fade-in">
+                    <div class="glass-card chart-card">
+                        <div class="chart-title">
+                            <span class="dot" style="background:var(--accent-blue)"></span>
+                            pH History
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartPh"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 fade-in">
+                    <div class="glass-card chart-card">
+                        <div class="chart-title">
+                            <span class="dot" style="background:var(--accent-amber)"></span>
+                            Temperature History
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartTemp"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 fade-in">
+                    <div class="glass-card chart-card">
+                        <div class="chart-title">
+                            <span class="dot" style="background:var(--accent-violet)"></span>
+                            TDS History
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartTds"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 fade-in">
+                    <div class="glass-card chart-card">
+                        <div class="chart-title">
+                            <span class="dot" style="background:var(--accent-emerald)"></span>
+                            Turbidity History
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartTurb"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Scripts ─────────────────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <script>
+    (() => {
+        'use strict';
+
+        // ── Thresholds (must match Pi and Lambda) ────────────────────────
+        const THRESHOLDS = {
+            ph:          { min: 6.5, max: 8.5 },
+            temperature: { min: null, max: 30.0 },
+            tds:         { min: null, max: 500.0 },
+            turbidity:   { min: null, max: 4.0 },
+        };
+
+        const REFRESH_MS = 10000; // 10 seconds
+
+        // ── DOM references ───────────────────────────────────────────────
+        const els = {
+            valuePh:   document.getElementById('valuePh'),
+            valueTemp: document.getElementById('valueTemp'),
+            valueTds:  document.getElementById('valueTds'),
+            valueTurb: document.getElementById('valueTurb'),
+            badgePh:   document.getElementById('badgePh'),
+            badgeTemp: document.getElementById('badgeTemp'),
+            badgeTds:  document.getElementById('badgeTds'),
+            badgeTurb: document.getElementById('badgeTurb'),
+            lastUpdate:     document.getElementById('lastUpdate'),
+            connectionDot:  document.getElementById('connectionDot'),
+            connectionText: document.getElementById('connectionText'),
+        };
+
+        // ── Chart setup ──────────────────────────────────────────────────
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            animation: { duration: 400, easing: 'easeOutQuart' },
+            scales: {
+                x: {
+                    display: true,
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: {
+                        color: 'rgba(255,255,255,0.3)',
+                        font: { size: 10, family: 'Inter' },
+                        maxTicksLimit: 8,
+                        maxRotation: 0,
+                    },
+                },
+                y: {
+                    display: true,
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: {
+                        color: 'rgba(255,255,255,0.3)',
+                        font: { size: 10, family: 'Inter' },
+                    },
+                },
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 26, 0.9)',
+                    titleFont: { family: 'Inter', size: 12 },
+                    bodyFont: { family: 'Inter', size: 11 },
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                },
+            },
+        };
+
+        function makeChart(canvasId, color, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, color.replace(')', ', 0.25)').replace('rgb', 'rgba'));
+            gradient.addColorStop(1, color.replace(')', ', 0.0)').replace('rgb', 'rgba'));
+
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: label,
+                        data: [],
+                        borderColor: color,
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: color,
+                        tension: 0.35,
+                    }],
+                },
+                options: { ...chartDefaults },
+            });
+        }
+
+        const charts = {
+            ph:          makeChart('chartPh',   'rgb(59, 130, 246)',  'pH'),
+            temperature: makeChart('chartTemp', 'rgb(245, 158, 11)', 'Temperature (°C)'),
+            tds:         makeChart('chartTds',  'rgb(139, 92, 246)', 'TDS (mg/L)'),
+            turbidity:   makeChart('chartTurb', 'rgb(16, 185, 129)', 'Turbidity (NTU)'),
+        };
+
+        // ── Helper: check if value is out of range ───────────────────────
+        function isAlert(param, value) {
+            if (value === null || value === undefined) return false;
+            const t = THRESHOLDS[param];
+            if (t.min !== null && value < t.min) return true;
+            if (t.max !== null && value > t.max) return true;
+            return false;
+        }
+
+        // ── Helper: update a sensor card ─────────────────────────────────
+        function updateCard(valueEl, badgeEl, param, value) {
+            if (value === null || value === undefined) {
+                valueEl.textContent = 'N/A';
+                valueEl.style.color = 'var(--text-secondary)';
+                badgeEl.className = 'status-badge na';
+                badgeEl.innerHTML = '<i class="bi bi-dash-circle"></i> No data';
+                return;
+            }
+
+            const formatted = typeof value === 'number' ? value.toFixed(2) : value;
+            valueEl.textContent = formatted;
+            valueEl.classList.remove('flash');
+            void valueEl.offsetWidth; // trigger reflow for re-animation
+            valueEl.classList.add('flash');
+
+            if (isAlert(param, value)) {
+                valueEl.style.color = 'var(--accent-rose)';
+                badgeEl.className = 'status-badge alert';
+                badgeEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Alert';
+            } else {
+                valueEl.style.color = 'var(--accent-emerald)';
+                badgeEl.className = 'status-badge ok';
+                badgeEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> Normal';
+            }
+        }
+
+        // ── Helper: format timestamp for display ─────────────────────────
+        function formatTime(isoStr) {
+            if (!isoStr) return '—';
+            const d = new Date(isoStr);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function formatChartLabel(isoStr) {
+            if (!isoStr) return '';
+            const d = new Date(isoStr);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ── Set connection status ────────────────────────────────────────
+        function setConnectionStatus(status) {
+            els.connectionDot.className = 'status-dot ' + status;
+            const labels = { online: 'Connected', offline: 'Disconnected', waiting: 'Connecting…' };
+            els.connectionText.textContent = labels[status] || status;
+        }
+
+        // ── Fetch latest reading ─────────────────────────────────────────
+        async function fetchLatest() {
+            try {
+                const resp = await fetch('/api/readings/latest/');
+                if (resp.status === 404) {
+                    setConnectionStatus('waiting');
+                    return;
+                }
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const data = await resp.json();
+                setConnectionStatus('online');
+
+                updateCard(els.valuePh,   els.badgePh,   'ph',          data.ph);
+                updateCard(els.valueTemp, els.badgeTemp, 'temperature', data.temperature);
+                updateCard(els.valueTds,  els.badgeTds,  'tds',         data.tds);
+                updateCard(els.valueTurb, els.badgeTurb, 'turbidity',   data.turbidity);
+
+                els.lastUpdate.textContent = formatTime(data.timestamp);
+
+            } catch (err) {
+                console.error('Failed to fetch latest reading:', err);
+                setConnectionStatus('offline');
+            }
+        }
+
+        // ── Fetch history and update charts ──────────────────────────────
+        async function fetchHistory() {
+            try {
+                const resp = await fetch('/api/readings/history/?n=60');
+                if (!resp.ok) return;
+
+                const data = await resp.json();
+                if (!data.length) return;
+
+                const labels = data.map(r => formatChartLabel(r.timestamp));
+
+                function updateChart(chart, key) {
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].data = data.map(r => r[key]);
+                    chart.update('none'); // skip animation for smooth updates
+                }
+
+                updateChart(charts.ph,          'ph');
+                updateChart(charts.temperature, 'temperature');
+                updateChart(charts.tds,         'tds');
+                updateChart(charts.turbidity,   'turbidity');
+
+            } catch (err) {
+                console.error('Failed to fetch history:', err);
+            }
+        }
+
+        // ── Initial load + interval ──────────────────────────────────────
+        async function refresh() {
+            await Promise.all([fetchLatest(), fetchHistory()]);
+        }
+
+        refresh();                            // first load immediately
+        setInterval(refresh, REFRESH_MS);     // then every 10 seconds
+
+    })();
+    </script>
+</body>
+</html>

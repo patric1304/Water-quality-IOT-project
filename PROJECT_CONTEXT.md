@@ -43,9 +43,12 @@ The codebase comments out DS18B20 sections so the rest of the scripts run withou
 
 | ADS1115 channel | Sensor |
 |---|---|
-| A0 | pH sensor analog out |
-| A1 | TDS sensor analog out |
-| A2 | Turbidity sensor analog out |
+| A0 | TDS sensor analog out |
+| A1 | Turbidity sensor analog out |
+| A3 | pH sensor analog out |
+
+> **⚠ Note:** `sensors/ph.py` currently references `ADS.P0` (line 95) but should use
+> `ADS.P3` to match the physical wiring and `calibrate_ph.py`. Fix before next demo.
 
 DS18B20 data pin → GPIO4 (Pi physical pin 7), with 4.7kΩ pull-up resistor to 3.3V.
 
