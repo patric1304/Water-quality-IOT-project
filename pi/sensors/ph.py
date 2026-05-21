@@ -92,7 +92,7 @@ class PHSensor:
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c)
         ads.gain = 1   # ±4.096V — do not change; calibration assumes this gain
-        self._channel = AnalogIn(ads, ADS.P0)
+        self._channel = AnalogIn(ads, 3)
 
     def _read_voltage(self) -> float:
         """

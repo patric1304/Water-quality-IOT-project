@@ -77,7 +77,7 @@ class TurbiditySensor:
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c)
         ads.gain = 1   # ±4.096V range
-        self._channel = AnalogIn(ads, ADS.P1)   # Turbidity on channel A1
+        self._channel = AnalogIn(ads, 1)   # Turbidity on channel A1
 
     def _read_voltage(self) -> float:
         """Read and average multiple voltage samples to reduce noise."""
