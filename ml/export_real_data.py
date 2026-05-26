@@ -66,9 +66,9 @@ def process_real_data(data):
     # Mark all real readings as non-anomalous
     df["is_anomaly"] = 0
 
-    # Convert timestamp to datetime
+    # Convert timestamp to datetime and strip timezone info
     if "timestamp" in df.columns:
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
 
     # Drop rows where all sensor values are null
     sensor_cols = [c for c in ["ph", "temperature", "tds", "turbidity"] if c in df.columns]

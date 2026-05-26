@@ -143,15 +143,15 @@ def build_autoencoder(seq_length: int, n_features: int) -> keras.Model:
 
 def compute_reconstruction_errors(model: keras.Model, sequences: np.ndarray) -> np.ndarray:
     """
-    Compute per-sequence reconstruction error (MSE averaged over timesteps and features).
+    Compute per-sequence reconstruction error (MSE of the LAST timestep only).
 
     Returns
     -------
     np.ndarray, shape (n_sequences,)
     """
     reconstructed = model.predict(sequences, verbose=0)
-    # MSE per sample: mean over (timesteps × features)
-    errors = np.mean((sequences - reconstructed) ** 2, axis=(1, 2))
+    # MSE of the last timestep (axis 1 is time, index -1 is last)
+    errors = np.mean((sequences[:, -1, :] - reconstructed[:, -1, :]) ** 2, axis=1)
     return errors
 
 
@@ -275,26 +275,25 @@ def main():
     sequences = create_sequences(scaled_data, SEQUENCE_LENGTH)
     print(f"  Total sequences: {len(sequences):,}")
 
-    # Label each sequence: anomalous if ANY reading in the window has is_anomaly==1
+    # Label each sequence based on the LAST reading in the window
     seq_labels = np.zeros(len(sequences), dtype=int)
     for i in range(len(sequences)):
-        window_labels = labels[i : i + SEQUENCE_LENGTH]
-        if np.any(window_labels == 1):
-            seq_labels[i] = 1
+        seq_labels[i] = labels[i + SEQUENCE_LENGTH - 1]
 
     n_normal_seq = (seq_labels == 0).sum()
     n_anomaly_seq = (seq_labels == 1).sum()
     print(f"  Normal sequences:  {n_normal_seq:,}")
     print(f"  Anomaly sequences: {n_anomaly_seq:,}")
 
-    # ── 5. Split normal sequences: 80% train, 20% test ──────────────────
+    # ── 5. Split normal sequences: 80% train, 20% test (Shuffled) ───────
     print(f"\n[5/8] Splitting normal sequences (train={1-TEST_SPLIT:.0%} / test={TEST_SPLIT:.0%})…")
     normal_sequences = sequences[seq_labels == 0]
     anomaly_sequences = sequences[seq_labels == 1]
 
-    n_train = int(len(normal_sequences) * (1 - TEST_SPLIT))
-    train_sequences = normal_sequences[:n_train]
-    test_normal_sequences = normal_sequences[n_train:]
+    from sklearn.model_selection import train_test_split
+    train_sequences, test_normal_sequences = train_test_split(
+        normal_sequences, test_size=TEST_SPLIT, random_state=42, shuffle=True
+    )
     print(f"  Train (normal only): {len(train_sequences):,}")
     print(f"  Test  (normal):      {len(test_normal_sequences):,}")
     print(f"  Test  (anomaly):     {len(anomaly_sequences):,}")

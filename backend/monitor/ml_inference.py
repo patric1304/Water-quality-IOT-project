@@ -148,8 +148,8 @@ def predict_anomaly(recent_readings):
         # ── Predict (reconstruct) ────────────────────────────────────────
         reconstructed = _model.predict(input_seq, verbose=0)
 
-        # ── Compute reconstruction error (MSE) ──────────────────────────
-        error = float(np.mean((input_seq - reconstructed) ** 2))
+        # ── Compute reconstruction error (MSE on LAST timestep only) ────
+        error = float(np.mean((input_seq[0, -1, :] - reconstructed[0, -1, :]) ** 2))
 
         # ── Compare to threshold ─────────────────────────────────────────
         threshold = _config["threshold"]
