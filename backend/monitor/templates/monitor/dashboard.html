@@ -339,6 +339,34 @@
             margin-bottom: 1rem;
             opacity: 0.4;
         }
+
+        /* ── ML Anomaly badge ───────────────────────────── */
+        .ml-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.15rem .55rem; border-radius:20px; font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:.35rem; }
+        .ml-badge.anomaly { background:rgba(239,68,68,.12); color:var(--accent-rose); border:1px solid rgba(239,68,68,.2); }
+        .ml-badge.normal { background:rgba(16,185,129,.12); color:var(--accent-emerald); border:1px solid rgba(16,185,129,.2); }
+        .ml-badge.pending { background:rgba(139,148,172,.08); color:var(--text-secondary); border:1px solid rgba(139,148,172,.15); }
+
+        /* ── Alert level badges ─────────────────────────── */
+        .alert-level-badge { display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .6rem; border-radius:20px; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+        .alert-level-badge.critical { background:rgba(239,68,68,.18); color:#f87171; border:1px solid rgba(239,68,68,.3); animation:alertPulse 1.5s ease-in-out infinite; }
+        .alert-level-badge.warning { background:rgba(245,158,11,.15); color:var(--accent-amber); border:1px solid rgba(245,158,11,.25); }
+        .alert-level-badge.info { background:rgba(59,130,246,.12); color:var(--accent-blue); border:1px solid rgba(59,130,246,.2); }
+
+        /* ── Score gauge ────────────────────────────────── */
+        .score-gauge { width:100%; height:6px; background:rgba(255,255,255,.06); border-radius:3px; margin-top:.5rem; overflow:hidden; }
+        .score-gauge-fill { height:100%; border-radius:3px; transition:width .6s ease, background .6s ease; }
+
+        /* ── Panel tables ───────────────────────────────── */
+        .panel-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.78rem; }
+        .panel-table th { color:var(--text-secondary); font-weight:500; text-transform:uppercase; font-size:.65rem; letter-spacing:.06em; padding:.5rem .75rem; border-bottom:1px solid var(--border-glass); text-align:left; }
+        .panel-table td { padding:.55rem .75rem; border-bottom:1px solid rgba(255,255,255,.03); color:var(--text-primary); }
+        .panel-table tr:last-child td { border-bottom:none; }
+        .panel-table tr:hover td { background:rgba(255,255,255,.02); }
+        .panel-title { font-size:.9rem; font-weight:600; margin-bottom:.75rem; display:flex; align-items:center; gap:.5rem; }
+        .panel-title i { font-size:1rem; }
+        .suppressed-tag { font-size:.6rem; padding:.1rem .4rem; border-radius:8px; background:rgba(59,130,246,.1); color:var(--accent-blue); border:1px solid rgba(59,130,246,.15); }
+        .model-info { font-size:.72rem; color:var(--text-secondary); text-align:center; padding:.75rem 0 .25rem; opacity:.6; }
+        .empty-panel { text-align:center; padding:2rem 1rem; color:var(--text-secondary); font-size:.8rem; opacity:.5; }
     </style>
 </head>
 <body>
@@ -380,6 +408,7 @@
                         <div id="badgePh" class="status-badge na">
                             <i class="bi bi-dash-circle"></i> Waiting
                         </div>
+                        <div id="mlBadgePh" class="ml-badge pending"><i class="bi bi-cpu"></i> ML: Waiting</div>
                         <div class="sensor-range">Safe: 6.5 – 8.5</div>
                     </div>
                 </div>
@@ -396,6 +425,7 @@
                         <div id="badgeTemp" class="status-badge na">
                             <i class="bi bi-dash-circle"></i> Waiting
                         </div>
+                        <div id="mlBadgeTemp" class="ml-badge pending"><i class="bi bi-cpu"></i> ML: Waiting</div>
                         <div class="sensor-range">Safe: 0 – 30 °C</div>
                     </div>
                 </div>
@@ -412,6 +442,7 @@
                         <div id="badgeTds" class="status-badge na">
                             <i class="bi bi-dash-circle"></i> Waiting
                         </div>
+                        <div id="mlBadgeTds" class="ml-badge pending"><i class="bi bi-cpu"></i> ML: Waiting</div>
                         <div class="sensor-range">Safe: &lt; 500 mg/L</div>
                     </div>
                 </div>
@@ -428,6 +459,7 @@
                         <div id="badgeTurb" class="status-badge na">
                             <i class="bi bi-dash-circle"></i> Waiting
                         </div>
+                        <div id="mlBadgeTurb" class="ml-badge pending"><i class="bi bi-cpu"></i> ML: Waiting</div>
                         <div class="sensor-range">Safe: &lt; 4 NTU</div>
                     </div>
                 </div>
@@ -485,6 +517,46 @@
                 </div>
             </div>
 
+            <!-- ── ML Status + Recent Anomalies ──────────── -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 fade-in">
+                    <div class="glass-card">
+                        <div class="panel-title"><i class="bi bi-cpu"></i> ML Anomaly Detection</div>
+                        <div style="font-size:.78rem;color:var(--text-secondary);margin-bottom:.75rem">
+                            Latest reading analysis
+                        </div>
+                        <div id="mlStatusContent">
+                            <div style="text-align:center;padding:1rem 0;color:var(--text-secondary);font-size:.8rem">
+                                <i class="bi bi-hourglass-split"></i> Waiting for data…
+                            </div>
+                        </div>
+                        <div class="model-info">
+                            <i class="bi bi-info-circle"></i> Model: LSTM Autoencoder · 20 features · Sequence: 20 steps
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 fade-in">
+                    <div class="glass-card">
+                        <div class="panel-title"><i class="bi bi-exclamation-diamond"></i> Recent Anomalies</div>
+                        <div id="anomaliesTableBody">
+                            <div class="empty-panel"><i class="bi bi-check-circle"></i> No anomalies detected yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Alert Log ─────────────────────────────── -->
+            <div class="row g-3 mb-4">
+                <div class="col-12 fade-in">
+                    <div class="glass-card">
+                        <div class="panel-title"><i class="bi bi-bell"></i> Alert Log</div>
+                        <div id="alertLogBody">
+                            <div class="empty-panel"><i class="bi bi-bell-slash"></i> No alerts recorded yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -495,96 +567,64 @@
     <script>
     (() => {
         'use strict';
-
-        // ── Thresholds (must match Pi and Lambda) ────────────────────────
         const THRESHOLDS = {
             ph:          { min: 6.5, max: 8.5 },
             temperature: { min: null, max: 30.0 },
             tds:         { min: null, max: 500.0 },
             turbidity:   { min: null, max: 4.0 },
         };
+        const REFRESH_MS = 10000;
 
-        const REFRESH_MS = 10000; // 10 seconds
-
-        // ── DOM references ───────────────────────────────────────────────
         const els = {
-            valuePh:   document.getElementById('valuePh'),
+            valuePh: document.getElementById('valuePh'),
             valueTemp: document.getElementById('valueTemp'),
-            valueTds:  document.getElementById('valueTds'),
+            valueTds: document.getElementById('valueTds'),
             valueTurb: document.getElementById('valueTurb'),
-            badgePh:   document.getElementById('badgePh'),
+            badgePh: document.getElementById('badgePh'),
             badgeTemp: document.getElementById('badgeTemp'),
-            badgeTds:  document.getElementById('badgeTds'),
+            badgeTds: document.getElementById('badgeTds'),
             badgeTurb: document.getElementById('badgeTurb'),
-            lastUpdate:     document.getElementById('lastUpdate'),
-            connectionDot:  document.getElementById('connectionDot'),
+            mlBadgePh: document.getElementById('mlBadgePh'),
+            mlBadgeTemp: document.getElementById('mlBadgeTemp'),
+            mlBadgeTds: document.getElementById('mlBadgeTds'),
+            mlBadgeTurb: document.getElementById('mlBadgeTurb'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            connectionDot: document.getElementById('connectionDot'),
             connectionText: document.getElementById('connectionText'),
+            mlStatusContent: document.getElementById('mlStatusContent'),
+            anomaliesTableBody: document.getElementById('anomaliesTableBody'),
+            alertLogBody: document.getElementById('alertLogBody'),
         };
 
-        // ── Chart setup ──────────────────────────────────────────────────
-
+        // ── Chart setup ─────────────────────────────────────────────
         const chartDefaults = {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
             animation: { duration: 400, easing: 'easeOutQuart' },
             scales: {
-                x: {
-                    display: true,
-                    grid: { color: 'rgba(255,255,255,0.04)' },
-                    ticks: {
-                        color: 'rgba(255,255,255,0.3)',
-                        font: { size: 10, family: 'Inter' },
-                        maxTicksLimit: 8,
-                        maxRotation: 0,
-                    },
-                },
-                y: {
-                    display: true,
-                    grid: { color: 'rgba(255,255,255,0.04)' },
-                    ticks: {
-                        color: 'rgba(255,255,255,0.3)',
-                        font: { size: 10, family: 'Inter' },
-                    },
-                },
+                x: { display: true, grid: { color: 'rgba(255,255,255,0.04)' },
+                     ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10, family: 'Inter' }, maxTicksLimit: 8, maxRotation: 0 } },
+                y: { display: true, grid: { color: 'rgba(255,255,255,0.04)' },
+                     ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10, family: 'Inter' } } },
             },
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(10, 14, 26, 0.9)',
-                    titleFont: { family: 'Inter', size: 12 },
-                    bodyFont: { family: 'Inter', size: 11 },
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    padding: 10,
-                    cornerRadius: 8,
-                },
+                tooltip: { backgroundColor: 'rgba(10,14,26,0.9)', titleFont: { family: 'Inter', size: 12 },
+                           bodyFont: { family: 'Inter', size: 11 }, borderColor: 'rgba(255,255,255,0.1)',
+                           borderWidth: 1, padding: 10, cornerRadius: 8 },
             },
         };
 
         function makeChart(canvasId, color, label) {
             const ctx = document.getElementById(canvasId).getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-            gradient.addColorStop(0, color.replace(')', ', 0.25)').replace('rgb', 'rgba'));
-            gradient.addColorStop(1, color.replace(')', ', 0.0)').replace('rgb', 'rgba'));
-
+            const g = ctx.createLinearGradient(0, 0, 0, 200);
+            g.addColorStop(0, color.replace(')', ', 0.25)').replace('rgb', 'rgba'));
+            g.addColorStop(1, color.replace(')', ', 0.0)').replace('rgb', 'rgba'));
             return new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: label,
-                        data: [],
-                        borderColor: color,
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: color,
-                        tension: 0.35,
-                    }],
-                },
+                data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: g,
+                         borderWidth: 2, fill: true, pointRadius: 0, pointHoverRadius: 5,
+                         pointHoverBackgroundColor: color, tension: 0.35 }] },
                 options: { ...chartDefaults },
             });
         }
@@ -596,31 +636,23 @@
             turbidity:   makeChart('chartTurb', 'rgb(16, 185, 129)', 'Turbidity (NTU)'),
         };
 
-        // ── Helper: check if value is out of range ───────────────────────
+        // ── Helpers ─────────────────────────────────────────────────
         function isAlert(param, value) {
-            if (value === null || value === undefined) return false;
+            if (value == null) return false;
             const t = THRESHOLDS[param];
-            if (t.min !== null && value < t.min) return true;
-            if (t.max !== null && value > t.max) return true;
-            return false;
+            return (t.min !== null && value < t.min) || (t.max !== null && value > t.max);
         }
 
-        // ── Helper: update a sensor card ─────────────────────────────────
         function updateCard(valueEl, badgeEl, param, value) {
-            if (value === null || value === undefined) {
+            if (value == null) {
                 valueEl.textContent = 'N/A';
                 valueEl.style.color = 'var(--text-secondary)';
                 badgeEl.className = 'status-badge na';
                 badgeEl.innerHTML = '<i class="bi bi-dash-circle"></i> No data';
                 return;
             }
-
-            const formatted = typeof value === 'number' ? value.toFixed(2) : value;
-            valueEl.textContent = formatted;
-            valueEl.classList.remove('flash');
-            void valueEl.offsetWidth; // trigger reflow for re-animation
-            valueEl.classList.add('flash');
-
+            valueEl.textContent = typeof value === 'number' ? value.toFixed(2) : value;
+            valueEl.classList.remove('flash'); void valueEl.offsetWidth; valueEl.classList.add('flash');
             if (isAlert(param, value)) {
                 valueEl.style.color = 'var(--accent-rose)';
                 badgeEl.className = 'status-badge alert';
@@ -632,87 +664,221 @@
             }
         }
 
-        // ── Helper: format timestamp for display ─────────────────────────
-        function formatTime(isoStr) {
-            if (!isoStr) return '—';
-            const d = new Date(isoStr);
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        function updateMlBadge(el, data) {
+            if (data.is_anomaly === null || data.is_anomaly === undefined) {
+                el.className = 'ml-badge pending';
+                el.innerHTML = '<i class="bi bi-cpu"></i> ML: Insufficient data';
+            } else if (data.is_anomaly) {
+                el.className = 'ml-badge anomaly';
+                el.innerHTML = `<i class="bi bi-exclamation-circle"></i> ML: Anomaly (${data.ml_confidence || '?'})`;
+            } else {
+                el.className = 'ml-badge normal';
+                el.innerHTML = '<i class="bi bi-shield-check"></i> ML: Normal';
+            }
         }
 
-        function formatChartLabel(isoStr) {
-            if (!isoStr) return '';
-            const d = new Date(isoStr);
-            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        function updateMlStatus(data) {
+            const c = els.mlStatusContent;
+            if (data.is_anomaly === null || data.is_anomaly === undefined) {
+                c.innerHTML = '<div style="text-align:center;padding:1rem 0;color:var(--text-secondary);font-size:.8rem">' +
+                    '<i class="bi bi-hourglass-split"></i> Insufficient readings for ML inference (need 25+)</div>';
+                return;
+            }
+            const score = data.anomaly_score != null ? data.anomaly_score.toFixed(6) : '—';
+            const conf = data.ml_confidence || '—';
+            const isAnom = data.is_anomaly;
+            const alertLvl = data.alert_level;
+            const pct = Math.min(100, (data.anomaly_score || 0) * 50);
+            const barColor = isAnom ? 'var(--accent-rose)' : 'var(--accent-emerald)';
+
+            let alertBadge = '';
+            if (alertLvl) {
+                const cls = alertLvl.toLowerCase();
+                const emoji = { CRITICAL: '🚨', WARNING: '⚠️', INFO: 'ℹ️' }[alertLvl] || '';
+                alertBadge = `<span class="alert-level-badge ${cls}">${emoji} ${alertLvl}</span>`;
+            }
+
+            let suppressed = '';
+            if (!isAnom && data.alert_level === 'INFO') {
+                suppressed = '<div class="suppressed-tag" style="margin-top:.5rem"><i class="bi bi-funnel"></i> Spike suppressed by ML — classified as noise</div>';
+            }
+
+            c.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+                    <span style="font-size:.78rem;color:var(--text-secondary)">Status</span>
+                    <span class="ml-badge ${isAnom ? 'anomaly' : 'normal'}" style="margin:0">
+                        <i class="bi bi-${isAnom ? 'exclamation-circle' : 'shield-check'}"></i>
+                        ${isAnom ? 'Anomaly' : 'Normal'}
+                    </span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+                    <span style="font-size:.78rem;color:var(--text-secondary)">Reconstruction Error</span>
+                    <span style="font-size:.85rem;font-weight:600">${score}</span>
+                </div>
+                <div class="score-gauge"><div class="score-gauge-fill" style="width:${pct}%;background:${barColor}"></div></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
+                    <span style="font-size:.78rem;color:var(--text-secondary)">Confidence</span>
+                    <span style="font-size:.78rem;font-weight:500;text-transform:capitalize">${conf}</span>
+                </div>
+                ${alertBadge ? `<div style="margin-top:.5rem;text-align:center">${alertBadge}</div>` : ''}
+                ${suppressed}
+            `;
         }
 
-        // ── Set connection status ────────────────────────────────────────
+        function formatTime(s) {
+            if (!s) return '—';
+            return new Date(s).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        function formatChartLabel(s) {
+            if (!s) return '';
+            return new Date(s).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        function formatDateTime(s) {
+            if (!s) return '—';
+            const d = new Date(s);
+            return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+                   d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
         function setConnectionStatus(status) {
             els.connectionDot.className = 'status-dot ' + status;
             const labels = { online: 'Connected', offline: 'Disconnected', waiting: 'Connecting…' };
             els.connectionText.textContent = labels[status] || status;
         }
 
-        // ── Fetch latest reading ─────────────────────────────────────────
+        function alertLevelBadgeHtml(level) {
+            if (!level) return '<span style="color:var(--text-secondary);font-size:.7rem">—</span>';
+            const cls = level.toLowerCase();
+            const emoji = { CRITICAL: '🚨', WARNING: '⚠️', INFO: 'ℹ️' }[level] || '';
+            return `<span class="alert-level-badge ${cls}">${emoji} ${level}</span>`;
+        }
+
+        // ── Fetch latest reading ────────────────────────────────────
         async function fetchLatest() {
             try {
                 const resp = await fetch('/api/readings/latest/');
-                if (resp.status === 404) {
-                    setConnectionStatus('waiting');
-                    return;
-                }
+                if (resp.status === 404) { setConnectionStatus('waiting'); return; }
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
                 const data = await resp.json();
                 setConnectionStatus('online');
 
-                updateCard(els.valuePh,   els.badgePh,   'ph',          data.ph);
+                updateCard(els.valuePh, els.badgePh, 'ph', data.ph);
                 updateCard(els.valueTemp, els.badgeTemp, 'temperature', data.temperature);
-                updateCard(els.valueTds,  els.badgeTds,  'tds',         data.tds);
-                updateCard(els.valueTurb, els.badgeTurb, 'turbidity',   data.turbidity);
+                updateCard(els.valueTds, els.badgeTds, 'tds', data.tds);
+                updateCard(els.valueTurb, els.badgeTurb, 'turbidity', data.turbidity);
 
+                updateMlBadge(els.mlBadgePh, data);
+                updateMlBadge(els.mlBadgeTemp, data);
+                updateMlBadge(els.mlBadgeTds, data);
+                updateMlBadge(els.mlBadgeTurb, data);
+
+                updateMlStatus(data);
                 els.lastUpdate.textContent = formatTime(data.timestamp);
-
             } catch (err) {
-                console.error('Failed to fetch latest reading:', err);
+                console.error('Failed to fetch latest:', err);
                 setConnectionStatus('offline');
             }
         }
 
-        // ── Fetch history and update charts ──────────────────────────────
+        // ── Fetch history ───────────────────────────────────────────
         async function fetchHistory() {
             try {
                 const resp = await fetch('/api/readings/history/?n=60');
                 if (!resp.ok) return;
-
                 const data = await resp.json();
                 if (!data.length) return;
-
                 const labels = data.map(r => formatChartLabel(r.timestamp));
-
-                function updateChart(chart, key) {
+                function upd(chart, key) {
                     chart.data.labels = labels;
                     chart.data.datasets[0].data = data.map(r => r[key]);
-                    chart.update('none'); // skip animation for smooth updates
+                    chart.update('none');
                 }
-
-                updateChart(charts.ph,          'ph');
-                updateChart(charts.temperature, 'temperature');
-                updateChart(charts.tds,         'tds');
-                updateChart(charts.turbidity,   'turbidity');
-
-            } catch (err) {
-                console.error('Failed to fetch history:', err);
-            }
+                upd(charts.ph, 'ph');
+                upd(charts.temperature, 'temperature');
+                upd(charts.tds, 'tds');
+                upd(charts.turbidity, 'turbidity');
+            } catch (err) { console.error('Failed to fetch history:', err); }
         }
 
-        // ── Initial load + interval ──────────────────────────────────────
+        // ── Fetch anomalies ─────────────────────────────────────────
+        async function fetchAnomalies() {
+            try {
+                const resp = await fetch('/api/readings/anomalies/');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data.length) {
+                    els.anomaliesTableBody.innerHTML = '<div class="empty-panel"><i class="bi bi-check-circle"></i> No anomalies detected yet</div>';
+                    return;
+                }
+                let html = '<table class="panel-table"><thead><tr><th>Time</th><th>pH</th><th>Temp</th><th>TDS</th><th>Turb</th><th>Score</th><th>Confidence</th></tr></thead><tbody>';
+                data.slice(0, 10).forEach(r => {
+                    html += `<tr>
+                        <td>${formatDateTime(r.timestamp)}</td>
+                        <td>${r.ph != null ? r.ph.toFixed(1) : '—'}</td>
+                        <td>${r.temperature != null ? r.temperature.toFixed(1) : '—'}</td>
+                        <td>${r.tds != null ? r.tds.toFixed(0) : '—'}</td>
+                        <td>${r.turbidity != null ? r.turbidity.toFixed(1) : '—'}</td>
+                        <td style="font-weight:600">${r.anomaly_score != null ? r.anomaly_score.toFixed(4) : '—'}</td>
+                        <td><span style="text-transform:capitalize">${r.ml_confidence || '—'}</span></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                els.anomaliesTableBody.innerHTML = html;
+            } catch (err) { console.error('Failed to fetch anomalies:', err); }
+        }
+
+        // ── Fetch alert log ─────────────────────────────────────────
+        async function fetchAlertLog() {
+            try {
+                const resp = await fetch('/api/readings/alerts/');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data.length) {
+                    els.alertLogBody.innerHTML = '<div class="empty-panel"><i class="bi bi-bell-slash"></i> No alerts recorded yet</div>';
+                    return;
+                }
+                let html = '<table class="panel-table"><thead><tr><th>Time</th><th>Level</th><th>Trigger</th><th>ML Score</th><th>ML Says</th><th>Status</th></tr></thead><tbody>';
+                data.forEach(r => {
+                    // Determine what triggered it
+                    let triggers = [];
+                    if (r.ph != null && isAlert('ph', r.ph)) triggers.push(`pH ${r.ph.toFixed(1)}`);
+                    if (r.temperature != null && isAlert('temperature', r.temperature)) triggers.push(`Temp ${r.temperature.toFixed(1)}`);
+                    if (r.tds != null && isAlert('tds', r.tds)) triggers.push(`TDS ${r.tds.toFixed(0)}`);
+                    if (r.turbidity != null && isAlert('turbidity', r.turbidity)) triggers.push(`Turb ${r.turbidity.toFixed(1)}`);
+                    const triggerStr = triggers.length ? triggers.join(', ') : 'ML pattern';
+
+                    const mlStatus = r.is_anomaly ? '<span style="color:var(--accent-rose)">Anomaly</span>' :
+                                     '<span style="color:var(--accent-emerald)">Normal</span>';
+
+                    let statusHtml;
+                    if (r.alert_level === 'INFO' && !r.is_anomaly) {
+                        statusHtml = '<span class="suppressed-tag"><i class="bi bi-funnel"></i> Suppressed</span>';
+                    } else if (r.alert_sent) {
+                        statusHtml = '<span style="color:var(--accent-emerald);font-size:.7rem"><i class="bi bi-check2-all"></i> Sent</span>';
+                    } else {
+                        statusHtml = '<span style="color:var(--text-secondary);font-size:.7rem"><i class="bi bi-clock"></i> Pending</span>';
+                    }
+
+                    html += `<tr>
+                        <td>${formatDateTime(r.timestamp)}</td>
+                        <td>${alertLevelBadgeHtml(r.alert_level)}</td>
+                        <td>${triggerStr}</td>
+                        <td>${r.anomaly_score != null ? r.anomaly_score.toFixed(4) : '—'}</td>
+                        <td>${mlStatus}</td>
+                        <td>${statusHtml}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                els.alertLogBody.innerHTML = html;
+            } catch (err) { console.error('Failed to fetch alert log:', err); }
+        }
+
+        // ── Refresh loop ────────────────────────────────────────────
         async function refresh() {
-            await Promise.all([fetchLatest(), fetchHistory()]);
+            await Promise.all([fetchLatest(), fetchHistory(), fetchAnomalies(), fetchAlertLog()]);
         }
-
-        refresh();                            // first load immediately
-        setInterval(refresh, REFRESH_MS);     // then every 10 seconds
-
+        refresh();
+        setInterval(refresh, REFRESH_MS);
     })();
     </script>
 </body>

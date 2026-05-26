@@ -27,8 +27,15 @@ class SensorReadingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SensorReading
-        fields = ["id", "timestamp", "ph", "temperature", "tds", "turbidity", "source"]
-        read_only_fields = ["id"]
+        fields = [
+            "id", "timestamp", "ph", "temperature", "tds", "turbidity", "source",
+            "is_anomaly", "anomaly_score", "ml_confidence",
+            "alert_level", "alert_sent",
+        ]
+        read_only_fields = [
+            "id", "is_anomaly", "anomaly_score", "ml_confidence",
+            "alert_level", "alert_sent",
+        ]
         extra_kwargs = {
             "timestamp": {"required": False},
             "source": {"required": False},

@@ -47,6 +47,41 @@ class SensorReading(models.Model):
         help_text="Device identifier (e.g. 'pi-01').",
     )
 
+    # ── ML Anomaly Detection fields (populated by predict_anomaly) ────────
+    is_anomaly = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="True if the ML model flagged this reading as anomalous.",
+    )
+    anomaly_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="ML reconstruction error score (higher = more anomalous).",
+    )
+    ml_confidence = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="ML confidence level: 'high', 'medium', or 'low'.",
+    )
+
+    # ── Smart Alerting fields (determined by threshold + ML gating) ───────
+    alert_level = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        choices=[
+            ("CRITICAL", "Critical"),
+            ("WARNING", "Warning"),
+            ("INFO", "Info"),
+        ],
+        help_text="Alert severity: CRITICAL, WARNING, or INFO.",
+    )
+    alert_sent = models.BooleanField(
+        default=False,
+        help_text="Whether an SNS notification was sent for this reading.",
+    )
+
     class Meta:
         ordering = ["-timestamp"]
         verbose_name = "Sensor Reading"
