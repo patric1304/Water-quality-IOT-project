@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
+# Copy ML model files and feature engineering from repo root
+COPY ../ml /app/../ml
+
 # Make entrypoint executable
 RUN chmod +x entrypoint.sh
 
