@@ -31,5 +31,9 @@ Thumbs.db
 .idea/
 *.swp
 
+.antigravitycli/
+*.md
+lambda/
+
 
 toDO.txt

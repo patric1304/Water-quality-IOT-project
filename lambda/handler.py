@@ -4,8 +4,8 @@ import urllib.request
 
 # ── Configuration ─────────────────────────────────────────────────────
 # Update DJANGO_API_URL and DJANGO_API_KEY after Django is deployed on Render
-DJANGO_API_URL = "https://your-app.onrender.com/api/readings/"
-DJANGO_API_KEY = "REPLACE_WITH_YOUR_API_KEY"
+DJANGO_API_URL = "https://water-monitor-oodh.onrender.com/api/readings/"
+DJANGO_API_KEY = "Vkd7G5rBmKonJP_N9zkT1Nk-hD0IytLjlTqmJHauWKg"
 SNS_TOPIC_ARN  = "arn:aws:sns:eu-north-1:480493465332:water-monitor-alerts"
 
 THRESHOLDS = {
