@@ -59,7 +59,7 @@ class TemperatureSensor:
             or reading fails.
         """
 
-        # ── DS18B20 disabled ─────────────────────────────────────────────────
+        # -- DS18B20 disabled -------------------------------------------------
         # Uncomment the block below when the DS18B20 is physically connected.
         # Delete or comment the  return None  line at the bottom of this block.
         #
@@ -73,7 +73,7 @@ class TemperatureSensor:
         # except Exception as e:
         #     print(f"[Temperature sensor] Read error: {e}")
         #     return None
-        # ── end DS18B20 block ─────────────────────────────────────────────────
+        # -- end DS18B20 block -------------------------------------------------
 
         return None   # DS18B20: remove this line when sensor is connected
 

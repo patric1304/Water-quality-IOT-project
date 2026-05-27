@@ -1,7 +1,7 @@
 """
 ml/export_real_data.py
 ----------------------
-Phase 2 — Export real data from the Django API and merge with synthetic data.
+Export real data from the Django API and merge with synthetic data.
 
 Pulls real sensor readings from the live deployment, marks them as non-anomalous,
 and merges with the synthetically generated mock data to produce the final
@@ -19,7 +19,7 @@ import pandas as pd
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# -- Configuration -------------------------------------------------------------
 
 API_URL = "https://water-monitor-oodh.onrender.com/api/readings/history/?n=500"
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -40,17 +40,17 @@ def fetch_real_data():
         resp = urlopen(req, timeout=TIMEOUT)
         raw = resp.read().decode("utf-8")
         data = json.loads(raw)
-        print(f"  ✓ Received {len(data)} real readings from API")
+        print(f"  OK Received {len(data)} real readings from API")
         return data
     except HTTPError as e:
-        print(f"  ✗ HTTP error: {e.code} {e.reason}")
+        print(f"  ERROR HTTP error: {e.code} {e.reason}")
         return None
     except URLError as e:
-        print(f"  ✗ Connection error: {e.reason}")
+        print(f"  ERROR Connection error: {e.reason}")
         print("    (Render free tier may be asleep — try again in 60s)")
         return None
     except Exception as e:
-        print(f"  ✗ Unexpected error: {e}")
+        print(f"  ERROR Unexpected error: {e}")
         return None
 
 
@@ -86,14 +86,14 @@ def merge_datasets(df_real, df_mock):
 
 def main():
     print("=" * 60)
-    print("Phase 2 — Export Real Data & Merge")
+    print("Export Real Data & Merge")
     print("=" * 60)
 
     os.makedirs(DATA_DIR, exist_ok=True)
 
     # Check that mock data exists
     if not os.path.exists(MOCK_FILE):
-        print(f"\n  ✗ Mock data not found at: {MOCK_FILE}")
+        print(f"\n  ERROR Mock data not found at: {MOCK_FILE}")
         print("    Run 'python ml/generate_mock_data.py' first.")
         return
 
@@ -107,7 +107,7 @@ def main():
     if raw and len(raw) > 0:
         df_real = process_real_data(raw)
         df_real.to_csv(REAL_FILE, index=False)
-        print(f"  ✓ Saved real data: {len(df_real):,} rows → {REAL_FILE}")
+        print(f"  OK Saved real data: {len(df_real):,} rows → {REAL_FILE}")
     else:
         print("\n  ⚠ No real data available — using mock data only.")
         print("    (This is fine for initial training; retrain later with real data)")
@@ -123,7 +123,7 @@ def main():
     n_mock = len(df_mock)
     n_anom = df_combined["is_anomaly"].sum()
 
-    print(f"\n  ✓ Combined dataset saved → {COMBINED_FILE}")
+    print(f"\n  OK Combined dataset saved → {COMBINED_FILE}")
     print(f"    Total rows:    {n_total:,}")
     print(f"    Real readings: {n_real:,}")
     print(f"    Mock readings: {n_mock:,}")

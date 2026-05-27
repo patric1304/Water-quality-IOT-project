@@ -1,7 +1,7 @@
 """
 ml/eda.py
 ---------
-Phase 3 — Exploratory Data Analysis.
+Exploratory Data Analysis.
 
 Generates publication-ready plots for the project report:
   1. Sensor distributions (histogram + KDE)
@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# -- Configuration -------------------------------------------------------------
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PLOT_DIR = os.path.join(os.path.dirname(__file__), "plots")
@@ -58,7 +58,7 @@ plt.rcParams.update({
 def load_data():
     """Load the combined dataset."""
     if not os.path.exists(COMBINED_FILE):
-        print(f"  ✗ Combined data not found: {COMBINED_FILE}")
+        print(f"  ERROR Combined data not found: {COMBINED_FILE}")
         print("    Run Phase 1 and 2 first.")
         return None
     df = pd.read_csv(COMBINED_FILE, parse_dates=["timestamp"])
@@ -68,7 +68,7 @@ def load_data():
 def print_statistics(df):
     """Print summary statistics to the console."""
     print("\n  Summary Statistics (Normal readings only)")
-    print("  " + "─" * 56)
+    print("  " + "-" * 56)
 
     normal = df[df["is_anomaly"] == 0]
     stats = normal[SENSOR_COLS].describe(percentiles=[0.05, 0.25, 0.5, 0.75, 0.95])
@@ -119,7 +119,7 @@ def plot_distributions(df):
     path = os.path.join(PLOT_DIR, "distributions.png")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {path}")
+    print(f"  OK Saved: {path}")
 
 
 def plot_correlation(df):
@@ -140,7 +140,7 @@ def plot_correlation(df):
     path = os.path.join(PLOT_DIR, "correlation_heatmap.png")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {path}")
+    print(f"  OK Saved: {path}")
 
 
 def plot_time_series(df):
@@ -174,7 +174,7 @@ def plot_time_series(df):
     path = os.path.join(PLOT_DIR, "time_series.png")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {path}")
+    print(f"  OK Saved: {path}")
 
 
 def plot_anomaly_scatter(df):
@@ -208,12 +208,12 @@ def plot_anomaly_scatter(df):
     path = os.path.join(PLOT_DIR, "anomaly_scatter.png")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  ✓ Saved: {path}")
+    print(f"  OK Saved: {path}")
 
 
 def main():
     print("=" * 60)
-    print("Phase 3 — Exploratory Data Analysis")
+    print("Exploratory Data Analysis")
     print("=" * 60)
 
     os.makedirs(PLOT_DIR, exist_ok=True)

@@ -1,7 +1,7 @@
 """
 ml/generate_mock_data.py
 ------------------------
-Phase 1 — Generate synthetic training data for the LSTM Autoencoder model.
+Generate synthetic training data for the LSTM Autoencoder model.
 
 Generates ~20,000 sensor readings:
   - ~19,000 normal readings drawn from observed statistical distributions
@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# -- Configuration -------------------------------------------------------------
 
 SEED = 42
 N_NORMAL = 19000
@@ -167,7 +167,7 @@ def generate_anomalies(n):
 
 def main():
     print("=" * 60)
-    print("Phase 1 — Generating Synthetic Training Data")
+    print("Generating Synthetic Training Data")
     print("=" * 60)
 
     # Create output directory
@@ -199,10 +199,10 @@ def main():
     # Report
     total = len(df)
     n_anom = df["is_anomaly"].sum()
-    print(f"\n  ✓ Saved to: {OUTPUT_FILE}")
-    print(f"  ✓ Total readings:  {total:,}")
-    print(f"  ✓ Normal readings: {total - n_anom:,}")
-    print(f"  ✓ Anomalies:       {n_anom:,} ({100*n_anom/total:.1f}%)")
+    print(f"\n  OK Saved to: {OUTPUT_FILE}")
+    print(f"  OK Total readings:  {total:,}")
+    print(f"  OK Normal readings: {total - n_anom:,}")
+    print(f"  OK Anomalies:       {n_anom:,} ({100*n_anom/total:.1f}%)")
     print(f"\n  Sample statistics:")
     for col in ["ph", "temperature", "tds", "turbidity"]:
         normal_vals = df[df["is_anomaly"] == 0][col]
