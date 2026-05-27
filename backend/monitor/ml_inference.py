@@ -39,7 +39,7 @@ ML_DIR_LOCAL = os.path.normpath(os.path.join(BASE_DIR, "ml"))
 ML_DIR_REPO  = os.path.normpath(os.path.join(BASE_DIR, "..", "ml"))
 ML_DIR = ML_DIR_LOCAL if os.path.isdir(ML_DIR_LOCAL) else ML_DIR_REPO
 
-MODEL_PATH  = os.path.join(ML_DIR, "model.keras")
+MODEL_PATH  = os.path.join(ML_DIR, "model.tflite")
 SCALER_PATH = os.path.join(ML_DIR, "scaler.joblib")
 CONFIG_PATH = os.path.join(ML_DIR, "model_config.json")
 
@@ -68,9 +68,10 @@ def _load():
 
     logger.info("Loading LSTM Autoencoder model from %s", model_path)
 
-    # Import keras here to avoid top-level TF import when not needed
-    from tensorflow import keras
-    _model = keras.models.load_model(model_path)
+    # Use lightweight tflite_runtime instead of keras
+    import tflite_runtime.interpreter as tflite
+    _model = tflite.Interpreter(model_path=model_path)
+    _model.allocate_tensors()
 
     logger.info("Loading scaler from %s", scaler_path)
     _scaler = joblib.load(scaler_path)
@@ -150,8 +151,12 @@ def predict_anomaly(recent_readings):
         # ── Reshape to (1, seq_length, n_features) ───────────────────────
         input_seq = scaled_window.reshape(1, seq_length, -1)
 
-        # ── Predict (reconstruct) ────────────────────────────────────────
-        reconstructed = _model.predict(input_seq, verbose=0)
+        # ── Predict (reconstruct) using TFLite ───────────────────────────
+        input_details = _model.get_input_details()
+        output_details = _model.get_output_details()
+        _model.set_tensor(input_details[0]['index'], input_seq)
+        _model.invoke()
+        reconstructed = _model.get_tensor(output_details[0]['index'])
 
         # ── Compute reconstruction error (MSE on LAST timestep only) ────
         error = float(np.mean((input_seq[0, -1, :] - reconstructed[0, -1, :]) ** 2))
