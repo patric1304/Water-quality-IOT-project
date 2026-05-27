@@ -24,7 +24,7 @@ Usage:
 import numpy as np
 import pandas as pd
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# -- Constants -----------------------------------------------------------------
 
 SENSORS = ["ph", "temperature", "tds", "turbidity"]
 """The 4 raw sensor column names."""
@@ -35,7 +35,7 @@ ROLLING_WINDOW = 5
 SEQUENCE_LENGTH = 20
 """Number of timesteps in each LSTM input sequence."""
 
-# ── Feature column definitions (order matters — must match training) ──────────
+# -- Feature column definitions (order matters — must match training) ----------
 
 # 1. Raw sensors (4)
 _raw_features = list(SENSORS)
@@ -71,7 +71,7 @@ N_FEATURES = len(FEATURE_COLUMNS)
 # Sanity check at import time
 assert N_FEATURES == 20, f"Expected 20 features, got {N_FEATURES}"
 
-# ── Default fill values for missing sensor readings ──────────────────────────
+# -- Default fill values for missing sensor readings --------------------------
 
 _FILL_DEFAULTS = {
     "ph":          7.0,
@@ -81,7 +81,7 @@ _FILL_DEFAULTS = {
 }
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
+# -- Public API ----------------------------------------------------------------
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -110,22 +110,22 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # Work on a copy to avoid mutating the caller's frame
     df = df.copy()
 
-    # ── 0. Ensure timestamp is datetime & sort ────────────────────────────
+    # -- 0. Ensure timestamp is datetime & sort ----------------------------
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    # ── 1. Fill nulls with safe defaults ──────────────────────────────────
+    # -- 1. Fill nulls with safe defaults ----------------------------------
     for col, default in _FILL_DEFAULTS.items():
         df[col] = df[col].fillna(default)
 
-    # ── 2. Raw sensor values (already present) ────────────────────────────
+    # -- 2. Raw sensor values (already present) ----------------------------
     # Nothing to compute — they're the first 4 features.
 
-    # ── 3. Delta / change from previous reading ──────────────────────────
+    # -- 3. Delta / change from previous reading --------------------------
     for sensor in SENSORS:
         df[f"{sensor}_delta"] = df[sensor].diff().fillna(0.0)
 
-    # ── 4. Rolling mean (window=5) ────────────────────────────────────────
+    # -- 4. Rolling mean (window=5) ----------------------------------------
     for sensor in SENSORS:
         df[f"{sensor}_rolling_mean"] = (
             df[sensor]
@@ -133,7 +133,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
             .mean()
         )
 
-    # ── 5. Rolling std (window=5) ─────────────────────────────────────────
+    # -- 5. Rolling std (window=5) -----------------------------------------
     for sensor in SENSORS:
         df[f"{sensor}_rolling_std"] = (
             df[sensor]
@@ -142,11 +142,11 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
             .fillna(0.0)
         )
 
-    # ── 6. Cross-sensor ratios ────────────────────────────────────────────
+    # -- 6. Cross-sensor ratios --------------------------------------------
     df["ph_tds_ratio"]       = df["ph"]  / (df["tds"] + 1e-6)
     df["tds_turbidity_ratio"] = df["tds"] / (df["turbidity"] + 1e-6)
 
-    # ── 7. Cyclical time encoding ─────────────────────────────────────────
+    # -- 7. Cyclical time encoding -----------------------------------------
     hour = df["timestamp"].dt.hour + df["timestamp"].dt.minute / 60.0
     df["hour_sin"] = np.sin(2 * np.pi * hour / 24.0)
     df["hour_cos"] = np.cos(2 * np.pi * hour / 24.0)
