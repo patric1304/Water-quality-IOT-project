@@ -29,7 +29,7 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
 
-# ── ADC setup ────────────────────────────────────────────────────────────────
+# -- ADC setup ----------------------------------------------------------------
 i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
 ads.gain = 1          # ±4.096V range — appropriate for pH sensor output
@@ -97,7 +97,7 @@ def verify_calibration(v7: float, v4: float) -> None:
         v7: calibrated voltage at pH 7
         v4: calibrated voltage at pH 4
     """
-    print("\n── Verification ─────────────────────────────────────────────────")
+    print("\n-- Verification -------------------------------------------------")
     print("  Leave the sensor in the pH 4.0 solution (or try clean water).")
     print("  Press Enter to take a verification reading.")
     input()
@@ -111,20 +111,20 @@ def verify_calibration(v7: float, v4: float) -> None:
     print()
 
     if abs(ph - 4.0) < 0.3:
-        print("  ✓  Reading looks correct — within 0.3 of pH 4.0.")
+        print("  OK  Reading looks correct — within 0.3 of pH 4.0.")
     elif abs(ph - 7.0) < 0.3:
-        print("  ✓  Reading looks correct — within 0.3 of pH 7.0.")
+        print("  OK  Reading looks correct — within 0.3 of pH 7.0.")
     else:
         print("  ⚠  Reading seems off. Consider repeating calibration with")
         print("     fresh buffer solutions and a clean, dry sensor tip.")
 
 
-# ── main calibration flow ─────────────────────────────────────────────────────
+# -- main calibration flow -----------------------------------------------------
 def main():
     print()
-    print("══════════════════════════════════════════════════════════════════")
+    print("==================================================================")
     print("  pH Sensor Two-Point Calibration")
-    print("══════════════════════════════════════════════════════════════════")
+    print("==================================================================")
     print()
     print("  This script performs a two-point calibration using:")
     print("    Point 1 — pH 7.0 buffer (neutral)")
@@ -137,8 +137,8 @@ def main():
     print("      before recording")
     print()
 
-    # ── Point 1: pH 7.0 ──────────────────────────────────────────────────────
-    print("── Step 1 of 2 — pH 7.0 buffer ──────────────────────────────────")
+    # -- Point 1: pH 7.0 ------------------------------------------------------
+    print("-- Step 1 of 2 — pH 7.0 buffer ----------------------------------")
     print("  Place the sensor in the pH 7.0 buffer solution.")
     print("  Press Enter when ready to start reading.")
     input()
@@ -158,18 +158,18 @@ def main():
     print()
     print("  Capturing average voltage (20 samples)...")
     v7 = read_average_voltage(samples=20, delay=0.1)
-    print(f"  ✓  pH 7.0 voltage recorded: {v7:.4f} V")
+    print(f"  OK  pH 7.0 voltage recorded: {v7:.4f} V")
 
-    # ── Rinse ────────────────────────────────────────────────────────────────
+    # -- Rinse ----------------------------------------------------------------
     print()
-    print("── Rinse ─────────────────────────────────────────────────────────")
+    print("-- Rinse ---------------------------------------------------------")
     print("  Remove sensor from pH 7.0 solution.")
     print("  Rinse the tip with clean water and pat dry gently.")
     print("  Press Enter when ready to continue.")
     input()
 
-    # ── Point 2: pH 4.0 ──────────────────────────────────────────────────────
-    print("── Step 2 of 2 — pH 4.0 buffer ──────────────────────────────────")
+    # -- Point 2: pH 4.0 ------------------------------------------------------
+    print("-- Step 2 of 2 — pH 4.0 buffer ----------------------------------")
     print("  Place the sensor in the pH 4.0 buffer solution.")
     print("  Press Enter when ready to start reading.")
     input()
@@ -188,11 +188,11 @@ def main():
     print()
     print("  Capturing average voltage (20 samples)...")
     v4 = read_average_voltage(samples=20, delay=0.1)
-    print(f"  ✓  pH 4.0 voltage recorded: {v4:.4f} V")
+    print(f"  OK  pH 4.0 voltage recorded: {v4:.4f} V")
 
-    # ── Sanity check ─────────────────────────────────────────────────────────
+    # -- Sanity check ---------------------------------------------------------
     print()
-    print("── Calibration summary ───────────────────────────────────────────")
+    print("-- Calibration summary -------------------------------------------")
     print(f"  pH 7.0 buffer  →  {v7:.4f} V")
     print(f"  pH 4.0 buffer  →  {v4:.4f} V")
     print(f"  Voltage difference: {abs(v7 - v4):.4f} V")
@@ -204,20 +204,20 @@ def main():
         print("     contaminated buffer solutions. Consider repeating.")
         print()
 
-    # ── Save ─────────────────────────────────────────────────────────────────
+    # -- Save -----------------------------------------------------------------
     print("  Saving calibration values to config.py...")
     save_calibration(v7, v4)
 
-    # ── Verify ───────────────────────────────────────────────────────────────
+    # -- Verify ---------------------------------------------------------------
     verify = input("\n  Run a verification reading now? (y/n): ").strip().lower()
     if verify == "y":
         verify_calibration(v7, v4)
 
     print()
-    print("══════════════════════════════════════════════════════════════════")
+    print("==================================================================")
     print("  Calibration complete.")
     print("  You can now run main.py to start collecting readings.")
-    print("══════════════════════════════════════════════════════════════════")
+    print("==================================================================")
     print()
 
 

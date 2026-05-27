@@ -7,7 +7,7 @@ Reads all four sensors on a fixed interval and either:
   - Prints readings to the terminal (CLOUD_ENABLED = False)
   - Prints to terminal AND publishes to AWS IoT Core via MQTT (CLOUD_ENABLED = True)
 
-── Quick start ──────────────────────────────────────────────────────────────
+-- Quick start --------------------------------------------------------------
   1. Copy config.example.py to config.py
   2. Run calibrate_ph.py to fill in pH calibration values
   3. Run this script:  python3 main.py
@@ -19,7 +19,7 @@ Reads all four sensors on a fixed interval and either:
     Set CLOUD_ENABLED = True and make sure config.py has your MQTT settings
     and the certs/ folder has your three AWS certificate files.
 
-── DS18B20 temperature sensor ───────────────────────────────────────────────
+-- DS18B20 temperature sensor -----------------------------------------------
   The DS18B20 is currently NOT connected. The temperature sensor module
   returns None, which is handled gracefully:
     - TDS compensation falls back to assuming 25 °C
@@ -37,7 +37,7 @@ from sensors.tds         import TDSSensor
 from sensors.turbidity   import TurbiditySensor
 from sensors.temperature import TemperatureSensor   # returns None until DS18B20 connected
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# -- Configuration -------------------------------------------------------------
 
 # Set to False to print to terminal only (safe for testing without AWS setup).
 # Set to True when you have AWS IoT Core configured and certs in place.
@@ -46,7 +46,7 @@ CLOUD_ENABLED = False
 # How often to take a reading (seconds).
 READ_INTERVAL = 10
 
-# ── Alert thresholds (for terminal colour coding) ──────────────────────────────
+# -- Alert thresholds (for terminal colour coding) ------------------------------
 THRESHOLDS = {
     "ph":          (6.5, 8.5),    # (min, max) — alert outside this range
     "temperature": (None, 30.0),  # alert if above 30 °C; no lower limit
@@ -55,7 +55,7 @@ THRESHOLDS = {
 }
 
 
-# ── MQTT cloud publishing ─────────────────────────────────────────────────────
+# -- MQTT cloud publishing -----------------------------------------------------
 # This entire section is skipped when CLOUD_ENABLED = False.
 # All cloud-related imports and setup are inside this block so the script
 # runs cleanly without paho-mqtt installed when not needed.
@@ -98,7 +98,7 @@ if CLOUD_ENABLED:
     mqtt_client.loop_start()   # non-blocking background network thread
 
 
-# ── Helper: terminal formatting ───────────────────────────────────────────────
+# -- Helper: terminal formatting -----------------------------------------------
 
 RESET  = "\033[0m"
 RED    = "\033[91m"
@@ -149,7 +149,7 @@ def _print_reading(reading: dict) -> None:
     ntu_v,  ntu_s  = _status(reading["turbidity"],   "turbidity")
 
     print()
-    print(f"  {BOLD}── Reading @ {ts} ──────────────────────────────{RESET}")
+    print(f"  {BOLD}-- Reading @ {ts} ------------------------------{RESET}")
     print(f"  pH          : {ph_v:<20} {ph_s}")
     print(f"  Temperature : {tmp_v:<20} {tmp_s}  (DS18B20 not connected)")
     print(f"  TDS         : {tds_v:<20} mg/L   {tds_s}")
@@ -181,7 +181,7 @@ def _publish(reading: dict) -> None:
         print(f"  [MQTT] Publish failed (rc={result.rc}). Check connection.")
 
 
-# ── Sensor initialisation ─────────────────────────────────────────────────────
+# -- Sensor initialisation -----------------------------------------------------
 
 def _init_sensors():
     """
@@ -195,23 +195,23 @@ def _init_sensors():
 
     try:
         sensors["ph"] = PHSensor()
-        print(f"  {GREEN}✓{RESET} pH sensor (ADS1115 A0)")
+        print(f"  {GREEN}OK{RESET} pH sensor (ADS1115 A0)")
     except Exception as e:
-        print(f"  {RED}✗{RESET} pH sensor failed to initialise: {e}")
+        print(f"  {RED}ERROR{RESET} pH sensor failed to initialise: {e}")
         sensors["ph"] = None
 
     try:
         sensors["tds"] = TDSSensor()
-        print(f"  {GREEN}✓{RESET} TDS sensor (ADS1115 A1)")
+        print(f"  {GREEN}OK{RESET} TDS sensor (ADS1115 A1)")
     except Exception as e:
-        print(f"  {RED}✗{RESET} TDS sensor failed to initialise: {e}")
+        print(f"  {RED}ERROR{RESET} TDS sensor failed to initialise: {e}")
         sensors["tds"] = None
 
     try:
         sensors["turbidity"] = TurbiditySensor()
-        print(f"  {GREEN}✓{RESET} Turbidity sensor (ADS1115 A2)")
+        print(f"  {GREEN}OK{RESET} Turbidity sensor (ADS1115 A2)")
     except Exception as e:
-        print(f"  {RED}✗{RESET} Turbidity sensor failed to initialise: {e}")
+        print(f"  {RED}ERROR{RESET} Turbidity sensor failed to initialise: {e}")
         sensors["turbidity"] = None
 
     # DS18B20 temperature sensor — always initialised but returns None
@@ -222,13 +222,13 @@ def _init_sensors():
     return sensors
 
 
-# ── Main loop ─────────────────────────────────────────────────────────────────
+# -- Main loop -----------------------------------------------------------------
 
 def main():
     print()
-    print(f"{BOLD}{'═' * 60}{RESET}")
+    print(f"{BOLD}{'=' * 60}{RESET}")
     print(f"{BOLD}  Water Quality Monitor — Raspberry Pi{RESET}")
-    print(f"{'═' * 60}")
+    print(f"{'=' * 60}")
     print(f"  Cloud publishing : {'ENABLED (AWS IoT Core)' if CLOUD_ENABLED else 'DISABLED (terminal only)'}")
     print(f"  Read interval    : {READ_INTERVAL} seconds")
     print(f"  Stop             : Ctrl+C")
@@ -237,7 +237,7 @@ def main():
 
     print()
     print(f"  {BOLD}Starting sensor loop...{RESET}")
-    print(f"{'─' * 60}")
+    print(f"{'-' * 60}")
 
     reading_count = 0
 
@@ -245,7 +245,7 @@ def main():
         while True:
             reading_count += 1
 
-            # ── Read all sensors ──────────────────────────────────────────────
+            # -- Read all sensors ----------------------------------------------
 
             # Temperature first — used for TDS compensation.
             # Returns None when DS18B20 is not connected (normal for now).
@@ -265,7 +265,7 @@ def main():
             # Turbidity
             turbidity = sensors["turbidity"].read() if sensors["turbidity"] else None
 
-            # ── Build payload ─────────────────────────────────────────────────
+            # -- Build payload -------------------------------------------------
             timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
             reading = {
@@ -276,13 +276,13 @@ def main():
                 "timestamp":   timestamp,
             }
 
-            # ── Display in terminal ───────────────────────────────────────────
+            # -- Display in terminal -------------------------------------------
             _print_reading(reading)
 
-            # ── Publish to cloud (if enabled) ─────────────────────────────────
+            # -- Publish to cloud (if enabled) ---------------------------------
             _publish(reading)
 
-            # ── Wait for next reading ─────────────────────────────────────────
+            # -- Wait for next reading -----------------------------------------
             time.sleep(READ_INTERVAL)
 
     except KeyboardInterrupt:
