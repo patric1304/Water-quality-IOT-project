@@ -186,6 +186,18 @@ def predict_anomaly(recent_readings):
         logger.debug("Raw reconstruction errors: %s", raw_errors)
 
         anomalous_features = {k: False for k in raw_errors}
+
+        # ── Rate of change check (Delta >= 1.0 NTU) ──────────────────────
+        # Force the anomaly flag if turbidity jumps or drops by 1.0+ NTU
+        try:
+            turb_delta = float(df["turbidity_delta"].iloc[-1])
+            if abs(turb_delta) >= 1.0:
+                is_anomaly = True
+                confidence = "high"
+                anomalous_features["turbidity"] = True
+        except (KeyError, IndexError, ValueError, TypeError):
+            pass
+
         if is_anomaly:
             # 1. Flag the feature with the maximum reconstruction error (fallback/primary driver)
             # Only flag if the error is statistically significant (squared error >= 4.0, or 2 standard deviations)
@@ -229,7 +241,7 @@ def predict_anomaly(recent_readings):
             if turb_val is not None:
                 try:
                     turb_val = float(turb_val)
-                    if turb_val > 4.0:
+                    if turb_val > 4.0:  # physical safety threshold
                         anomalous_features["turbidity"] = True
                 except (ValueError, TypeError):
                     pass
