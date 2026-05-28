@@ -39,7 +39,7 @@ ML_DIR_LOCAL = os.path.normpath(os.path.join(BASE_DIR, "ml"))
 ML_DIR_REPO  = os.path.normpath(os.path.join(BASE_DIR, "..", "ml"))
 ML_DIR = ML_DIR_LOCAL if os.path.isdir(ML_DIR_LOCAL) else ML_DIR_REPO
 
-MODEL_PATH  = os.path.join(ML_DIR, "model.tflite")
+MODEL_PATH  = os.path.join(ML_DIR, "model.keras")
 SCALER_PATH = os.path.join(ML_DIR, "scaler.joblib")
 CONFIG_PATH = os.path.join(ML_DIR, "model_config.json")
 
