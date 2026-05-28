@@ -30,12 +30,10 @@ import os
 from django.http import JsonResponse
 
 def ml_debug(request):
-    import traceback
     import tflite_runtime.interpreter as tflite
     
     model_exists = os.path.exists(MODEL_PATH)
     shape_info = None
-    error_traceback = None
     
     if model_exists:
         try:
@@ -44,33 +42,13 @@ def ml_debug(request):
             shape_info = str(interp.get_input_details()[0]['shape'].tolist())
         except Exception as e:
             shape_info = f"ERROR: {e}"
-            error_traceback = traceback.format_exc()
-            
-    # Also check if we can load the repo-level model.tflite if we copy it or if it exists
-    repo_model_path = os.path.join(BASE_DIR, "..", "ml", "model.tflite")
-    repo_model_exists = os.path.exists(repo_model_path)
-    repo_shape_info = None
-    repo_error_traceback = None
-    if repo_model_exists:
-        try:
-            interp_repo = tflite.Interpreter(model_path=repo_model_path)
-            interp_repo.allocate_tensors()
-            repo_shape_info = str(interp_repo.get_input_details()[0]['shape'].tolist())
-        except Exception as e:
-            repo_shape_info = f"ERROR: {e}"
-            repo_error_traceback = traceback.format_exc()
     
     return JsonResponse({
         "ml_dir": ML_DIR,
-        "tflite_version": getattr(tflite, "__version__", "unknown"),
         "model_exists": model_exists,
         "scaler_exists": os.path.exists(SCALER_PATH),
         "ml_dir_contents": os.listdir(ML_DIR) if os.path.isdir(ML_DIR) else "DIR NOT FOUND",
         "tflite_input_shape": shape_info,
-        "tflite_error_traceback": error_traceback,
-        "repo_model_exists": repo_model_exists,
-        "repo_tflite_input_shape": repo_shape_info,
-        "repo_tflite_error_traceback": repo_error_traceback,
     })
 
 logger = logging.getLogger(__name__)
