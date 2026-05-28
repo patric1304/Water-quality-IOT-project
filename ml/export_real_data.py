@@ -55,24 +55,53 @@ def fetch_real_data():
 
 
 def process_real_data(data):
-    """Convert API JSON response to a DataFrame with is_anomaly=0."""
+    """
+    Convert API JSON response to a DataFrame.
+    Preserves the `is_anomaly` field, filters out corrupted sensor glitches,
+    and flags any threshold breaches as anomalous to keep the normal training set clean.
+    """
     df = pd.DataFrame(data)
 
-    # Keep only the columns we need
-    cols_keep = ["timestamp", "ph", "temperature", "tds", "turbidity"]
+    # Keep the columns we need, including is_anomaly
+    cols_keep = ["timestamp", "ph", "temperature", "tds", "turbidity", "is_anomaly"]
     available = [c for c in cols_keep if c in df.columns]
     df = df[available].copy()
-
-    # Mark all real readings as non-anomalous
-    df["is_anomaly"] = 0
-
-    # Convert timestamp to datetime and strip timezone info
-    if "timestamp" in df.columns:
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
 
     # Drop rows where all sensor values are null
     sensor_cols = [c for c in ["ph", "temperature", "tds", "turbidity"] if c in df.columns]
     df = df.dropna(subset=sensor_cols, how="all")
+
+    # Clean extreme sensor glitches (obviously corrupted sensor readings / power spikes)
+    if "turbidity" in df.columns:
+        df = df[df["turbidity"] <= 100.0]
+    if "tds" in df.columns:
+        df = df[df["tds"] <= 1000.0]
+    if "ph" in df.columns:
+        df = df[(df["ph"] >= 0.0) & (df["ph"] <= 14.0)]
+    if "temperature" in df.columns:
+        df = df[(df["temperature"] >= 0.0) & (df["temperature"] <= 60.0)]
+
+    # Preserve and enforce is_anomaly flag
+    if "is_anomaly" in df.columns:
+        df["is_anomaly"] = df["is_anomaly"].fillna(False).astype(bool)
+    else:
+        df["is_anomaly"] = False
+
+    # Force flag any readings with threshold breaches as anomalies (just in case they weren't flagged)
+    if "ph" in df.columns:
+        df.loc[(df["ph"] < 6.0) | (df["ph"] > 9.0), "is_anomaly"] = True
+    if "turbidity" in df.columns:
+        df.loc[df["turbidity"] > 4.0, "is_anomaly"] = True
+    if "tds" in df.columns:
+        df.loc[df["tds"] > 450.0, "is_anomaly"] = True
+    if "temperature" in df.columns:
+        df.loc[df["temperature"] > 35.0, "is_anomaly"] = True
+
+    df["is_anomaly"] = df["is_anomaly"].astype(int)
+
+    # Convert timestamp to datetime and strip timezone info
+    if "timestamp" in df.columns:
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
 
     return df
 
@@ -107,9 +136,9 @@ def main():
     if raw and len(raw) > 0:
         df_real = process_real_data(raw)
         df_real.to_csv(REAL_FILE, index=False)
-        print(f"  OK Saved real data: {len(df_real):,} rows → {REAL_FILE}")
+        print(f"  OK Saved real data: {len(df_real):,} rows -> {REAL_FILE}")
     else:
-        print("\n  ⚠ No real data available — using mock data only.")
+        print("\n  [WARNING] No real data available — using mock data only.")
         print("    (This is fine for initial training; retrain later with real data)")
         df_real = pd.DataFrame(columns=df_mock.columns)
 
@@ -123,7 +152,7 @@ def main():
     n_mock = len(df_mock)
     n_anom = df_combined["is_anomaly"].sum()
 
-    print(f"\n  OK Combined dataset saved → {COMBINED_FILE}")
+    print(f"\n  OK Combined dataset saved -> {COMBINED_FILE}")
     print(f"    Total rows:    {n_total:,}")
     print(f"    Real readings: {n_real:,}")
     print(f"    Mock readings: {n_mock:,}")

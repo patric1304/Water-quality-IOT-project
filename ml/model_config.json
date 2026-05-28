@@ -1,5 +1,5 @@
 {
-  "threshold": 0.8787683248519897,
+  "threshold": 1.0788364887237547,
   "feature_columns": [
     "ph",
     "temperature",

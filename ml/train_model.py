@@ -351,7 +351,7 @@ def main():
     cm = confusion_matrix(y_true, y_pred)
 
     print("\n" + "=" * 50)
-    print("  LSTM Autoencoder — Anomaly Detection Results")
+    print("  LSTM Autoencoder - Anomaly Detection Results")
     print("  " + "-" * 46)
     print(f"  Precision:  {precision:.4f}")
     print(f"  Recall:     {recall:.4f}")
@@ -406,14 +406,14 @@ def main():
                        os.path.join(PLOT_DIR, "roc_curve.png"))
 
     # -- Summary ----------------------------------------------------------
-    print(f"\n  ╔==================================================╗")
-    print(f"  ║  LSTM Autoencoder ready for deployment!          ║")
-    print(f"  ║                                                  ║")
-    print(f"  ║  Files to commit:                                ║")
-    print(f"  ║    • ml/model.onnx                              ║")
-    print(f"  ║    • ml/scaler.joblib                            ║")
-    print(f"  ║    • ml/model_config.json                        ║")
-    print(f"  ╚==================================================╝")
+    print("\n  +==================================================+")
+    print("  |  LSTM Autoencoder ready for deployment!          |")
+    print("  |                                                  |")
+    print("  |  Files to commit:                                |")
+    print("  |    - ml/model.onnx                               |")
+    print("  |    - ml/scaler.joblib                            |")
+    print("  |    - ml/model_config.json                        |")
+    print("  +==================================================+")
     print()
 
 

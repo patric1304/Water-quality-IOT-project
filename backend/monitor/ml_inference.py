@@ -182,15 +182,60 @@ def predict_anomaly(recent_readings):
             "tds": tds_err,
             "turbidity": turb_err,
         }
+        
+        logger.debug("Raw reconstruction errors: %s", raw_errors)
 
         anomalous_features = {k: False for k in raw_errors}
         if is_anomaly:
+            # 1. Flag the feature with the maximum reconstruction error (fallback/primary driver)
             max_error = max(raw_errors.values())
-            # Use relative thresholding: flag features that contribute significantly
-            # to the anomaly (at least 55% of the maximum error, and at least 0.5)
-            rel_threshold = max(0.5, 0.55 * max_error)
             for k, v in raw_errors.items():
-                if v >= rel_threshold:
+                if v == max_error:
+                    anomalous_features[k] = True
+
+            # 2. Flag features that violate their basic safe thresholds (domain-specific checks)
+            # ph: [6.5, 8.5], temp: [15.0, 30.0], tds: <= 400.0, turbidity: <= 4.0
+            last_reading = recent_readings[-1]
+            
+            ph_val = last_reading.get("ph")
+            if ph_val is not None:
+                try:
+                    ph_val = float(ph_val)
+                    if ph_val < 6.5 or ph_val > 8.5:
+                        anomalous_features["ph"] = True
+                except (ValueError, TypeError):
+                    pass
+
+            temp_val = last_reading.get("temperature")
+            if temp_val is not None:
+                try:
+                    temp_val = float(temp_val)
+                    if temp_val < 15.0 or temp_val > 30.0:
+                        anomalous_features["temperature"] = True
+                except (ValueError, TypeError):
+                    pass
+
+            tds_val = last_reading.get("tds")
+            if tds_val is not None:
+                try:
+                    tds_val = float(tds_val)
+                    if tds_val > 400.0:
+                        anomalous_features["tds"] = True
+                except (ValueError, TypeError):
+                    pass
+
+            turb_val = last_reading.get("turbidity")
+            if turb_val is not None:
+                try:
+                    turb_val = float(turb_val)
+                    if turb_val > 4.0:
+                        anomalous_features["turbidity"] = True
+                except (ValueError, TypeError):
+                    pass
+
+            # 3. Flag other features with significant errors contributing to the anomaly
+            for k, v in raw_errors.items():
+                if v >= 5.0 and v >= 0.35 * max_error:
                     anomalous_features[k] = True
 
         return {
