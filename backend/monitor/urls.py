@@ -1,11 +1,3 @@
-"""
-monitor/urls.py
----------------
-URL routes for the monitor app.
-
-Mounted at the root of the project (included from watermonitor/urls.py).
-"""
-
 from django.urls import path
 from .views import (
     CreateReadingView,
@@ -14,6 +6,7 @@ from .views import (
     AnomalyListView,
     AlertLogView,
     DashboardView,
+    ml_debug,
 )
 
 urlpatterns = [
@@ -26,4 +19,7 @@ urlpatterns = [
 
     # ── Dashboard ─────────────────────────────────────────────────────────────
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
+
+    # ── Temporary ML debug ────────────────────────────────────────────────────
+    path("ml-debug/", ml_debug, name="ml-debug"),
 ]
