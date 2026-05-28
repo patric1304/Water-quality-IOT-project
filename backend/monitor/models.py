@@ -64,6 +64,22 @@ class SensorReading(models.Model):
         blank=True,
         help_text="ML confidence level: 'high', 'medium', or 'low'.",
     )
+    is_anomaly_ph = models.BooleanField(
+        default=False,
+        help_text="True if the ML model flagged pH as anomalous.",
+    )
+    is_anomaly_temp = models.BooleanField(
+        default=False,
+        help_text="True if the ML model flagged temperature as anomalous.",
+    )
+    is_anomaly_tds = models.BooleanField(
+        default=False,
+        help_text="True if the ML model flagged TDS as anomalous.",
+    )
+    is_anomaly_turb = models.BooleanField(
+        default=False,
+        help_text="True if the ML model flagged turbidity as anomalous.",
+    )
 
     # ── Smart Alerting fields (determined by threshold + ML gating) ───────
     alert_level = models.CharField(

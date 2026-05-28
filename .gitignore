@@ -34,6 +34,6 @@ Thumbs.db
 .antigravitycli/
 *.md
 lambda/handler.py
-
+send_test_data.py
 
 toDO.txt

@@ -155,7 +155,8 @@ def predict_anomaly(recent_readings):
         reconstructed = _model.run(None, {input_name: input_seq})[0]
 
         # ── Compute reconstruction error (MSE on LAST timestep only) ────
-        error = float(np.mean((input_seq[0, -1, :] - reconstructed[0, -1, :]) ** 2))
+        diff = input_seq[0, -1, :] - reconstructed[0, -1, :]
+        error = float(np.mean(diff ** 2))
 
         # ── Compare to threshold ─────────────────────────────────────────
         threshold = _config["threshold"]
@@ -169,10 +170,34 @@ def predict_anomaly(recent_readings):
         else:
             confidence = "low"
 
+        # ── Compute feature-specific reconstruction errors ────────────────
+        ph_err = float(diff[0] ** 2)
+        temp_err = float(diff[1] ** 2)
+        tds_err = float(diff[2] ** 2)
+        turb_err = float(diff[3] ** 2)
+
+        raw_errors = {
+            "ph": ph_err,
+            "temperature": temp_err,
+            "tds": tds_err,
+            "turbidity": turb_err,
+        }
+
+        anomalous_features = {k: False for k in raw_errors}
+        if is_anomaly:
+            max_error = max(raw_errors.values())
+            # Use relative thresholding: flag features that contribute significantly
+            # to the anomaly (at least 55% of the maximum error, and at least 0.5)
+            rel_threshold = max(0.5, 0.55 * max_error)
+            for k, v in raw_errors.items():
+                if v >= rel_threshold:
+                    anomalous_features[k] = True
+
         return {
             "is_anomaly":    bool(is_anomaly),
             "anomaly_score": round(float(error), 6),
             "confidence":    confidence,
+            "anomalous_features": anomalous_features,
         }
 
     except Exception as e:

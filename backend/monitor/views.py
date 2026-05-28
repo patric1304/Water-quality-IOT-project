@@ -159,11 +159,19 @@ class CreateReadingView(APIView):
                     reading.is_anomaly = ml_result["is_anomaly"]
                     reading.anomaly_score = ml_result["anomaly_score"]
                     reading.ml_confidence = ml_result["confidence"]
+                    
+                    anom_feats = ml_result.get("anomalous_features", {})
+                    reading.is_anomaly_ph = anom_feats.get("ph", False)
+                    reading.is_anomaly_temp = anom_feats.get("temperature", False)
+                    reading.is_anomaly_tds = anom_feats.get("tds", False)
+                    reading.is_anomaly_turb = anom_feats.get("turbidity", False)
+                    
                     logger.info(
-                        "ML inference: anomaly=%s, score=%.6f, confidence=%s",
+                        "ML inference: anomaly=%s, score=%.6f, confidence=%s, features=%s",
                         ml_result["is_anomaly"],
                         ml_result["anomaly_score"],
                         ml_result["confidence"],
+                        anom_feats,
                     )
                 else:
                     logger.info("ML inference returned None (insufficient data or model not loaded)")
