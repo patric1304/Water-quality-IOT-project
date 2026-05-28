@@ -188,9 +188,10 @@ def predict_anomaly(recent_readings):
         anomalous_features = {k: False for k in raw_errors}
         if is_anomaly:
             # 1. Flag the feature with the maximum reconstruction error (fallback/primary driver)
+            # Only flag if the error is statistically significant (squared error >= 4.0, or 2 standard deviations)
             max_error = max(raw_errors.values())
             for k, v in raw_errors.items():
-                if v == max_error:
+                if v == max_error and v >= 4.0:
                     anomalous_features[k] = True
 
             # 2. Flag features that violate their basic safe thresholds (domain-specific checks)
