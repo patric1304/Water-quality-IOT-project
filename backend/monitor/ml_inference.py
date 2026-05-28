@@ -68,9 +68,9 @@ def _load():
 
     logger.info("Loading LSTM Autoencoder model from %s", model_path)
 
-    # Use lightweight tflite_runtime instead of keras
-    import tflite_runtime.interpreter as tflite
-    _model = tflite.Interpreter(model_path=model_path)
+    # Use TensorFlow's built-in TFLite interpreter (supports Flex/SELECT_TF_OPS)
+    import tensorflow as tf
+    _model = tf.lite.Interpreter(model_path=model_path)
     _model.allocate_tensors()
 
     logger.info("Loading scaler from %s", scaler_path)

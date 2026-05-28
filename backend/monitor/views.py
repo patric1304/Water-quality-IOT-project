@@ -30,14 +30,14 @@ import os
 from django.http import JsonResponse
 
 def ml_debug(request):
-    import tflite_runtime.interpreter as tflite
+    import tensorflow as tf
     
     model_exists = os.path.exists(MODEL_PATH)
     shape_info = None
     
     if model_exists:
         try:
-            interp = tflite.Interpreter(model_path=MODEL_PATH)
+            interp = tf.lite.Interpreter(model_path=MODEL_PATH)
             interp.allocate_tensors()
             shape_info = str(interp.get_input_details()[0]['shape'].tolist())
         except Exception as e:
