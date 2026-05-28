@@ -30,8 +30,8 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, "mock_data.csv")
 # Normal distribution parameters (from real observed values)
 PARAMS = {
     "ph":          {"mean": 7.2,  "std": 0.4, "clip": (5.5, 9.0)},
-    "temperature": {"mean": 23.0, "std": 1.5, "clip": (15.0, 35.0)},
-    "tds":         {"mean": 108.0, "std": 15.0, "clip": (50.0, 400.0)},
+    "temperature": {"mean": 23.0, "std": 4.0, "clip": (15.0, 35.0)},
+    "tds":         {"mean": 120.0, "std": 50.0, "clip": (50.0, 400.0)},
     "turbidity":   {"mean": 2.0,  "std": 1.2, "clip": (0.0, 20.0)},
 }
 

@@ -78,7 +78,7 @@ CONFIG_FILE = os.path.join(ML_DIR, "model_config.json")
 
 # -- Hyperparameters -----------------------------------------------------------
 EPOCHS          = 100
-BATCH_SIZE      = 64
+BATCH_SIZE      = 32
 VALIDATION_SPLIT = 0.1
 THRESHOLD_PERCENTILE = 95      # percentile on TRAINING errors for threshold
 TEST_SPLIT      = 0.20          # fraction of normal sequences held out
