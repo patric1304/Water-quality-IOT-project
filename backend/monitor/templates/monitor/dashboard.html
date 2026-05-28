@@ -186,6 +186,11 @@
         /* ── Sensor cards ────────────────────────────────── */
         .sensor-card {
             text-align: center;
+            cursor: pointer;
+        }
+        .sensor-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .sensor-icon {
@@ -648,7 +653,7 @@
 
                 <!-- pH Card -->
                 <div class="col-6 col-lg-3 fade-in">
-                    <div class="glass-card sensor-card" id="cardPh">
+                    <div class="glass-card sensor-card" id="cardPh" data-param="ph">
                         <div class="sensor-icon ph">
                             <i class="bi bi-moisture"></i>
                         </div>
@@ -665,7 +670,7 @@
 
                 <!-- Temperature Card -->
                 <div class="col-6 col-lg-3 fade-in">
-                    <div class="glass-card sensor-card" id="cardTemp">
+                    <div class="glass-card sensor-card" id="cardTemp" data-param="temperature">
                         <div class="sensor-icon temp">
                             <i class="bi bi-thermometer-half"></i>
                         </div>
@@ -682,7 +687,7 @@
 
                 <!-- TDS Card -->
                 <div class="col-6 col-lg-3 fade-in">
-                    <div class="glass-card sensor-card" id="cardTds">
+                    <div class="glass-card sensor-card" id="cardTds" data-param="tds">
                         <div class="sensor-icon tds">
                             <i class="bi bi-water"></i>
                         </div>
@@ -699,7 +704,7 @@
 
                 <!-- Turbidity Card -->
                 <div class="col-6 col-lg-3 fade-in">
-                    <div class="glass-card sensor-card" id="cardTurb">
+                    <div class="glass-card sensor-card" id="cardTurb" data-param="turbidity">
                         <div class="sensor-icon turbidity">
                             <i class="bi bi-cloud-haze2"></i>
                         </div>
@@ -799,6 +804,31 @@
                         <div class="panel-title"><i class="bi bi-bell"></i> Alert Log</div>
                         <div id="alertLogBody" class="scrollable-panel">
                             <div class="empty-panel"><i class="bi bi-bell-slash"></i> No alerts recorded yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Info Modal ─────────────────────────────── -->
+            <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content glass-card" style="border: 1px solid var(--border-glass); background: rgba(10, 14, 26, 0.95); backdrop-filter: blur(25px); color: var(--text-primary);">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title" id="infoModalLabel" style="font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Parameter Details</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body pt-3 text-center">
+                            <div class="d-flex justify-content-center mb-3">
+                                <div id="modalIcon" class="sensor-icon" style="width: 64px; height: 64px; font-size: 2rem; border-radius: 16px;"></div>
+                            </div>
+                            <h4 id="modalTitle" class="mb-2" style="font-weight: 700; letter-spacing: -0.02em;">Parameter</h4>
+                            <div class="badge rounded-pill mb-4" id="modalRangeBadge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); font-size: 0.75rem; padding: 0.35rem 0.75rem;">Range: —</div>
+                            <div id="modalDescription" class="text-start fs-7" style="line-height: 1.6; color: var(--text-secondary); font-size: 0.85rem;">
+                                <!-- filled dynamically -->
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn px-4 w-100" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--text-primary); border-radius: 12px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;">Close</button>
                         </div>
                     </div>
                 </div>
@@ -1131,6 +1161,73 @@
                     els.alertLogBody.innerHTML = html;
                 } catch (err) { console.error('Failed to fetch alert log:', err); }
             }
+
+            // ── Parameter info pop-up ────────────────────────────────────
+            const PARAM_INFO = {
+                ph: {
+                    title: 'pH Level',
+                    iconClass: 'sensor-icon ph',
+                    icon: '<i class="bi bi-moisture"></i>',
+                    range: '6.5 – 8.5 pH',
+                    description: `
+                        <p><strong>What it is:</strong> pH measures the relative acidity or alkalinity of water on a scale from 0 (very acidic) to 14 (very alkaline), with 7 being neutral.</p>
+                        <p><strong>Why it matters:</strong> Extreme pH values can corrode pipes, leading to heavy metals like lead leaching into the water. For aquatic life, pH directly affects gill function and egg survival. Sudden drops can indicate acid rain or chemical discharge.</p>
+                        <p><strong>Safe Guidelines:</strong> Drinking water and healthy aquatic systems should have a pH between <strong>6.5 and 8.5</strong>. Lower levels taste sour/metallic; higher levels feel slippery and taste alkaline.</p>
+                    `
+                },
+                temperature: {
+                    title: 'Water Temperature',
+                    iconClass: 'sensor-icon temp',
+                    icon: '<i class="bi bi-thermometer-half"></i>',
+                    range: 'Below 30.0 °C',
+                    description: `
+                        <p><strong>What it is:</strong> Water temperature measures the average thermal kinetic energy of the water body.</p>
+                        <p><strong>Why it matters:</strong> Temperature governs the biological activity and solubility of gases in water. Colder water holds more dissolved oxygen, which fish need to survive. Warm water holds less oxygen and stimulates microbial activity and algal blooms, which can spoil water quality.</p>
+                        <p><strong>Safe Guidelines:</strong> While dependent on local climate, temperatures above <strong>30.0 °C</strong> are unsafe for most cold-water aquatic species and can indicate thermal pollution.</p>
+                    `
+                },
+                tds: {
+                    title: 'Total Dissolved Solids (TDS)',
+                    iconClass: 'sensor-icon tds',
+                    icon: '<i class="bi bi-water"></i>',
+                    range: 'Below 500 mg/L',
+                    description: `
+                        <p><strong>What it is:</strong> TDS represents the combined content of all inorganic and organic substances dissolved in water, such as calcium, magnesium, sodium, and sulfates.</p>
+                        <p><strong>Why it matters:</strong> While not a primary health hazard, high TDS causes mineral scaling in household appliances and piping. It can give water a salty, bitter taste. Spikes in TDS are strong indicators of sewage contamination, agricultural runoff, or industrial discharge.</p>
+                        <p><strong>Safe Guidelines:</strong> The EPA and WHO set the recommended aesthetic threshold at <strong>500 mg/L</strong>. Values over 1000 mg/L indicate mineral-rich water unsuitable for drinking.</p>
+                    `
+                },
+                turbidity: {
+                    title: 'Turbidity',
+                    iconClass: 'sensor-icon turbidity',
+                    icon: '<i class="bi bi-cloud-haze2"></i>',
+                    range: 'Below 4.0 NTU',
+                    description: `
+                        <p><strong>What it is:</strong> Turbidity measures the cloudiness or haziness of water caused by suspended sediment, clay, algae, and other microscopic particles.</p>
+                        <p><strong>Why it matters:</strong> Highly turbid water blocks light, disrupting aquatic plant photosynthesis. In drinking water, suspended particles can shelter pathogens and shield them from disinfection treatments (chlorination/UV), rendering purification ineffective.</p>
+                        <p><strong>Safe Guidelines:</strong> Safe drinking water standards require turbidity to be <strong>under 4.0 NTU</strong> (ideally below 1.0 NTU). Sudden spikes usually point to soil erosion, rainfall runoffs, or pipe disturbances.</p>
+                    `
+                }
+            };
+
+            const infoModalEl = document.getElementById('infoModal');
+            const infoModal = new bootstrap.Modal(infoModalEl);
+
+            document.querySelectorAll('.sensor-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const param = card.getAttribute('data-param');
+                    const info = PARAM_INFO[param];
+                    if (!info) return;
+
+                    document.getElementById('modalIcon').className = `sensor-icon ${info.iconClass}`;
+                    document.getElementById('modalIcon').innerHTML = info.icon;
+                    document.getElementById('modalTitle').textContent = info.title;
+                    document.getElementById('modalRangeBadge').textContent = `Safe Range: ${info.range}`;
+                    document.getElementById('modalDescription').innerHTML = info.description;
+
+                    infoModal.show();
+                });
+            });
 
             // ── Refresh loop ────────────────────────────────────────────
             async function refresh() {
