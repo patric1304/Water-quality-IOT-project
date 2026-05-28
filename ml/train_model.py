@@ -72,7 +72,7 @@ DATA_DIR    = os.path.join(ML_DIR, "data")
 PLOT_DIR    = os.path.join(ML_DIR, "plots")
 COMBINED_FILE = os.path.join(DATA_DIR, "combined_data.csv")
 
-MODEL_FILE  = os.path.join(ML_DIR, "model.keras")
+MODEL_FILE  = os.path.join(ML_DIR, "model.tflite")
 SCALER_FILE = os.path.join(ML_DIR, "scaler.joblib")
 CONFIG_FILE = os.path.join(ML_DIR, "model_config.json")
 
@@ -373,8 +373,18 @@ def main():
 
     # -- Save model, scaler, config ---------------------------------------
     print(f"\n  Saving artifacts...")
-    model.save(MODEL_FILE)
-    print(f"  OK Model saved:  {MODEL_FILE}")
+    # Convert Keras model → TFLite for lightweight inference
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    # LSTM requires Select TF ops (dynamic TensorList not supported by TFLite builtins)
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+        tf.lite.OpsSet.SELECT_TF_OPS,
+    ]
+    converter._experimental_lower_tensor_list_ops = False
+    tflite_model = converter.convert()
+    with open(MODEL_FILE, "wb") as f_model:
+        f_model.write(tflite_model)
+    print(f"  OK Model saved (TFLite):  {MODEL_FILE}")
 
     joblib.dump(scaler, SCALER_FILE)
     print(f"  OK Scaler saved: {SCALER_FILE}")
@@ -405,7 +415,7 @@ def main():
     print(f"  ║  LSTM Autoencoder ready for deployment!          ║")
     print(f"  ║                                                  ║")
     print(f"  ║  Files to commit:                                ║")
-    print(f"  ║    • ml/model.keras                              ║")
+    print(f"  ║    • ml/model.tflite                             ║")
     print(f"  ║    • ml/scaler.joblib                            ║")
     print(f"  ║    • ml/model_config.json                        ║")
     print(f"  ╚==================================================╝")
