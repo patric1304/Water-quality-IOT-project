@@ -72,7 +72,7 @@ DATA_DIR    = os.path.join(ML_DIR, "data")
 PLOT_DIR    = os.path.join(ML_DIR, "plots")
 COMBINED_FILE = os.path.join(DATA_DIR, "combined_data.csv")
 
-MODEL_FILE  = os.path.join(ML_DIR, "model.tflite")
+MODEL_FILE  = os.path.join(ML_DIR, "model.onnx")
 SCALER_FILE = os.path.join(ML_DIR, "scaler.joblib")
 CONFIG_FILE = os.path.join(ML_DIR, "model_config.json")
 
@@ -373,19 +373,13 @@ def main():
 
     # -- Save model, scaler, config ---------------------------------------
     print(f"\n  Saving artifacts...")
-    # Convert Keras model → TFLite using a concrete function with fixed input
-    # shape. This lets TFLite statically resolve LSTM tensor list sizes and
-    # produce a pure TFLite model (compatible with lightweight tflite-runtime,
-    # no SELECT_TF_OPS / Flex delegate needed → fits in 512 MB RAM on Render).
-    run_model = tf.function(lambda x: model(x))
-    concrete_func = run_model.get_concrete_function(
-        tf.TensorSpec([1, SEQUENCE_LENGTH, N_FEATURES], tf.float32)
-    )
-    converter = tf.lite.TFLiteConverter.from_concrete_functions([concrete_func])
-    tflite_model = converter.convert()
-    with open(MODEL_FILE, "wb") as f_model:
-        f_model.write(tflite_model)
-    print(f"  OK Model saved (TFLite):  {MODEL_FILE}")
+    # Convert Keras model → ONNX for lightweight inference.
+    # ONNX Runtime (~30 MB) has native LSTM support, unlike tflite-runtime
+    # which requires the heavy Flex delegate for LSTM tensor list ops.
+    import tf2onnx
+    spec = (tf.TensorSpec([1, SEQUENCE_LENGTH, N_FEATURES], tf.float32, name="input"),)
+    tf2onnx.convert.from_keras(model, input_signature=spec, output_path=MODEL_FILE)
+    print(f"  OK Model saved (ONNX):  {MODEL_FILE}")
 
     joblib.dump(scaler, SCALER_FILE)
     print(f"  OK Scaler saved: {SCALER_FILE}")
@@ -416,7 +410,7 @@ def main():
     print(f"  ║  LSTM Autoencoder ready for deployment!          ║")
     print(f"  ║                                                  ║")
     print(f"  ║  Files to commit:                                ║")
-    print(f"  ║    • ml/model.tflite                             ║")
+    print(f"  ║    • ml/model.onnx                              ║")
     print(f"  ║    • ml/scaler.joblib                            ║")
     print(f"  ║    • ml/model_config.json                        ║")
     print(f"  ╚==================================================╝")

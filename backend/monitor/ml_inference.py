@@ -39,7 +39,7 @@ ML_DIR_LOCAL = os.path.normpath(os.path.join(BASE_DIR, "ml"))
 ML_DIR_REPO  = os.path.normpath(os.path.join(BASE_DIR, "..", "ml"))
 ML_DIR = ML_DIR_LOCAL if os.path.isdir(ML_DIR_LOCAL) else ML_DIR_REPO
 
-MODEL_PATH  = os.path.join(ML_DIR, "model.tflite")
+MODEL_PATH  = os.path.join(ML_DIR, "model.onnx")
 SCALER_PATH = os.path.join(ML_DIR, "scaler.joblib")
 CONFIG_PATH = os.path.join(ML_DIR, "model_config.json")
 
@@ -56,7 +56,7 @@ _config = None
 
 
 def _load():
-    """Load the Keras model, scaler, and config from disk (once)."""
+    """Load the ONNX model, scaler, and config from disk (once)."""
     global _model, _scaler, _config
 
     if _model is not None:
@@ -68,10 +68,9 @@ def _load():
 
     logger.info("Loading LSTM Autoencoder model from %s", model_path)
 
-    # Use lightweight tflite_runtime (model must be converted without SELECT_TF_OPS)
-    import tflite_runtime.interpreter as tflite
-    _model = tflite.Interpreter(model_path=model_path)
-    _model.allocate_tensors()
+    # Use ONNX Runtime — lightweight (~30 MB), native LSTM support, NumPy 2.x OK
+    import onnxruntime as ort
+    _model = ort.InferenceSession(model_path)
 
     logger.info("Loading scaler from %s", scaler_path)
     _scaler = joblib.load(scaler_path)
@@ -151,12 +150,9 @@ def predict_anomaly(recent_readings):
         # ── Reshape to (1, seq_length, n_features) ───────────────────────
         input_seq = scaled_window.reshape(1, seq_length, -1)
 
-        # ── Predict (reconstruct) using TFLite ───────────────────────────
-        input_details = _model.get_input_details()
-        output_details = _model.get_output_details()
-        _model.set_tensor(input_details[0]['index'], input_seq)
-        _model.invoke()
-        reconstructed = _model.get_tensor(output_details[0]['index'])
+        # ── Predict (reconstruct) using ONNX Runtime ────────────────────
+        input_name = _model.get_inputs()[0].name
+        reconstructed = _model.run(None, {input_name: input_seq})[0]
 
         # ── Compute reconstruction error (MSE on LAST timestep only) ────
         error = float(np.mean((input_seq[0, -1, :] - reconstructed[0, -1, :]) ** 2))

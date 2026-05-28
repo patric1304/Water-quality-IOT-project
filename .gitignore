@@ -33,7 +33,7 @@ Thumbs.db
 
 .antigravitycli/
 *.md
-lambda/
+lambda/handler.py
 
 
 toDO.txt

@@ -30,16 +30,16 @@ import os
 from django.http import JsonResponse
 
 def ml_debug(request):
-    import tflite_runtime.interpreter as tflite
+    import onnxruntime as ort
     
     model_exists = os.path.exists(MODEL_PATH)
     shape_info = None
     
     if model_exists:
         try:
-            interp = tflite.Interpreter(model_path=MODEL_PATH)
-            interp.allocate_tensors()
-            shape_info = str(interp.get_input_details()[0]['shape'].tolist())
+            session = ort.InferenceSession(MODEL_PATH)
+            inp = session.get_inputs()[0]
+            shape_info = f"{inp.name}: {inp.shape}"
         except Exception as e:
             shape_info = f"ERROR: {e}"
     
@@ -48,7 +48,7 @@ def ml_debug(request):
         "model_exists": model_exists,
         "scaler_exists": os.path.exists(SCALER_PATH),
         "ml_dir_contents": os.listdir(ML_DIR) if os.path.isdir(ML_DIR) else "DIR NOT FOUND",
-        "tflite_input_shape": shape_info,
+        "onnx_input_shape": shape_info,
     })
 
 logger = logging.getLogger(__name__)
