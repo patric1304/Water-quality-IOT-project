@@ -43,12 +43,37 @@ def ml_debug(request):
         except Exception as e:
             shape_info = f"ERROR: {e}"
     
+    from django.db import connection
+    
+    columns = []
+    try:
+        with connection.cursor() as cursor:
+            # Try PostgreSQL schema query first
+            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'monitor_sensorreading'")
+            columns = [row[0] for row in cursor.fetchall()]
+            if not columns:
+                # SQLite fallback for local test verification
+                cursor.execute("PRAGMA table_info(monitor_sensorreading)")
+                columns = [row[1] for row in cursor.fetchall()]
+    except Exception as db_err:
+        columns = [f"ERROR: {db_err}"]
+
+    applied_migrations = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT name FROM django_migrations WHERE app = 'monitor' ORDER BY id")
+            applied_migrations = [row[0] for row in cursor.fetchall()]
+    except Exception as mig_err:
+        applied_migrations = [f"ERROR: {mig_err}"]
+    
     return JsonResponse({
         "ml_dir": ML_DIR,
         "model_exists": model_exists,
         "scaler_exists": os.path.exists(SCALER_PATH),
         "ml_dir_contents": os.listdir(ML_DIR) if os.path.isdir(ML_DIR) else "DIR NOT FOUND",
         "onnx_input_shape": shape_info,
+        "db_columns": columns,
+        "applied_migrations": applied_migrations,
     })
 
 logger = logging.getLogger(__name__)
