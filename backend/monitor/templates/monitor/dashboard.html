@@ -188,6 +188,7 @@
             text-align: center;
             cursor: pointer;
         }
+
         .sensor-card:hover {
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             border-color: rgba(255, 255, 255, 0.2);
@@ -809,31 +810,31 @@
                 </div>
             </div>
 
-            <!-- ── Info Modal ─────────────────────────────── -->
-            <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content glass-card" style="border: 1px solid var(--border-glass); background: rgba(10, 14, 26, 0.95); backdrop-filter: blur(25px); color: var(--text-primary);">
-                        <div class="modal-header border-0 pb-0">
-                            <h5 class="modal-title" id="infoModalLabel" style="font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Parameter Details</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body pt-3 text-center">
-                            <div class="d-flex justify-content-center mb-3">
-                                <div id="modalIcon" class="sensor-icon" style="width: 64px; height: 64px; font-size: 2rem; border-radius: 16px;"></div>
-                            </div>
-                            <h4 id="modalTitle" class="mb-2" style="font-weight: 700; letter-spacing: -0.02em;">Parameter</h4>
-                            <div class="badge rounded-pill mb-4" id="modalRangeBadge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); font-size: 0.75rem; padding: 0.35rem 0.75rem;">Range: —</div>
-                            <div id="modalDescription" class="text-start fs-7" style="line-height: 1.6; color: var(--text-secondary); font-size: 0.85rem;">
-                                <!-- filled dynamically -->
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0 pt-0">
-                            <button type="button" class="btn px-4 w-100" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--text-primary); border-radius: 12px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;">Close</button>
-                        </div>
+        </div>
+    </div>
+
+    <!-- ── Info Modal ─────────────────────────────── -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card" style="border: 1px solid var(--border-glass); background: rgba(10, 14, 26, 0.95); backdrop-filter: blur(25px); color: var(--text-primary);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="infoModalLabel" style="font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Parameter Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3 text-center">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div id="modalIcon" class="sensor-icon" style="width: 64px; height: 64px; font-size: 2rem; border-radius: 16px;"></div>
+                    </div>
+                    <h4 id="modalTitle" class="mb-2" style="font-weight: 700; letter-spacing: -0.02em;">Parameter</h4>
+                    <div class="badge rounded-pill mb-4" id="modalRangeBadge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); font-size: 0.75rem; padding: 0.35rem 0.75rem;">Range: —</div>
+                    <div id="modalDescription" class="text-start fs-7" style="line-height: 1.6; color: var(--text-secondary); font-size: 0.85rem;">
+                        <!-- filled dynamically -->
                     </div>
                 </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn px-4 w-100" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--text-primary); border-radius: 12px; font-size: 0.85rem; font-weight: 600; transition: background 0.2s;">Close</button>
+                </div>
             </div>
-
         </div>
     </div>
 
