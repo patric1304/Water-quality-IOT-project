@@ -25,6 +25,32 @@ from .serializers import SensorReadingSerializer
 from .authentication import HasValidAPIKey
 from .ml_inference import predict_anomaly
 
+from .ml_inference import MODEL_PATH, SCALER_PATH, ML_DIR
+import os
+from django.http import JsonResponse
+
+def ml_debug(request):
+    import tflite_runtime.interpreter as tflite
+    
+    model_exists = os.path.exists(MODEL_PATH)
+    shape_info = None
+    
+    if model_exists:
+        try:
+            interp = tflite.Interpreter(model_path=MODEL_PATH)
+            interp.allocate_tensors()
+            shape_info = str(interp.get_input_details()[0]['shape'].tolist())
+        except Exception as e:
+            shape_info = f"ERROR: {e}"
+    
+    return JsonResponse({
+        "ml_dir": ML_DIR,
+        "model_exists": model_exists,
+        "scaler_exists": os.path.exists(SCALER_PATH),
+        "ml_dir_contents": os.listdir(ML_DIR) if os.path.isdir(ML_DIR) else "DIR NOT FOUND",
+        "tflite_input_shape": shape_info,
+    })
+
 logger = logging.getLogger(__name__)
 
 # ── Thresholds (must match Lambda's THRESHOLDS) ──────────────────────────────
