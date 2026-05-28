@@ -373,14 +373,15 @@ def main():
 
     # -- Save model, scaler, config ---------------------------------------
     print(f"\n  Saving artifacts...")
-    # Convert Keras model → TFLite for lightweight inference
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    # LSTM requires Select TF ops (dynamic TensorList not supported by TFLite builtins)
-    converter.target_spec.supported_ops = [
-        tf.lite.OpsSet.TFLITE_BUILTINS,
-        tf.lite.OpsSet.SELECT_TF_OPS,
-    ]
-    converter._experimental_lower_tensor_list_ops = False
+    # Convert Keras model → TFLite using a concrete function with fixed input
+    # shape. This lets TFLite statically resolve LSTM tensor list sizes and
+    # produce a pure TFLite model (compatible with lightweight tflite-runtime,
+    # no SELECT_TF_OPS / Flex delegate needed → fits in 512 MB RAM on Render).
+    run_model = tf.function(lambda x: model(x))
+    concrete_func = run_model.get_concrete_function(
+        tf.TensorSpec([1, SEQUENCE_LENGTH, N_FEATURES], tf.float32)
+    )
+    converter = tf.lite.TFLiteConverter.from_concrete_functions([concrete_func])
     tflite_model = converter.convert()
     with open(MODEL_FILE, "wb") as f_model:
         f_model.write(tflite_model)
