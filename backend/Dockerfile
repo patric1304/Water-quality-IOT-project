@@ -7,14 +7,14 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install dependencies first (Docker layer caching)
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY . .
+# Copy backend project files
+COPY backend/ .
 
 # Copy ML model files and feature engineering from repo root
-COPY ../ml /app/../ml
+COPY ml/ /app/ml/
 
 # Make entrypoint executable
 RUN chmod +x entrypoint.sh
