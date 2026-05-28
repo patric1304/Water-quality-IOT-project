@@ -19,8 +19,6 @@ build/
 # ── Django ────────────────────────────────────────────────────────────────────
 backend/db.sqlite3
 backend/staticfiles/
-backend/monitor/migrations/*
-backend/monitor/migrations
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
