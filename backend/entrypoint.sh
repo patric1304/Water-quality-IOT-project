@@ -4,7 +4,7 @@ set -e
 echo "Running migrations..."
 python manage.py makemigrations monitor --noinput
 python manage.py migrate --noinput
-python manage.py purge_old_readings --days 0 
+# python manage.py purge_old_readings --days 0 
 # the line above is used to delete all the data in the database, the days param is used to delete data older than N days.
 
 
