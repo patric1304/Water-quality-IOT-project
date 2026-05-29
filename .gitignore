@@ -30,8 +30,13 @@ Thumbs.db
 *.swp
 
 .antigravitycli/
-*.md
-lambda/handler.py
 send_test_data.py
-
 toDO.txt
+
+# Planning/work-split docs (not part of the deliverable)
+ML_INTEGRATION_PLAN.md
+ML_LESSON.md
+ML_WORK_SPLIT.md
+SMART_ALERTING_PLAN.md
+SMART_ALERTING_WORK_SPLIT.md
+walkthrough.md

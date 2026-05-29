@@ -183,16 +183,16 @@ def lambda_handler(event, context):
     AWS Lambda entry point — processes each incoming sensor reading.
 
     Two-Layer Alert Decision Matrix:
-    ┌──────────────────┬────────────┬───────────────────┬─────────────────────────┐
-    │ Threshold breach  │ ML anomaly │ ML confidence     │ Action                  │
-    ├──────────────────┼────────────┼───────────────────┼─────────────────────────┤
-    │ Yes              │ Yes        │ high / medium     │ 🚨 CRITICAL alert       │
-    │ Yes              │ Yes        │ low               │ ⚠️ WARNING alert        │
-    │ Yes              │ No         │ any               │ ℹ️ Logged only (noise)  │
-    │ No               │ Yes        │ high              │ ⚠️ Soft alert           │
-    │ No               │ Yes        │ medium / low      │ ℹ️ Logged only          │
-    │ No               │ No         │ any               │ ✅ All normal            │
-    └──────────────────┴────────────┴───────────────────┴─────────────────────────┘
+    ┌──────────────────┬────────────┬─────────────────────────────────────┐
+    │ Threshold breach  │ ML anomaly │ Action                              │
+    ├──────────────────┼────────────┼─────────────────────────────────────┤
+    │ Yes              │ Yes        │ 🚨 CRITICAL alert (SNS)             │
+    │ Yes              │ No         │ ℹ️ Logged only (likely noise spike) │
+    │ No               │ Yes        │ ℹ️ Logged only (no threshold issue) │
+    │ No               │ No         │ ✅ All normal                        │
+    └──────────────────┴────────────┴─────────────────────────────────────┘
+
+    An SNS notification is sent ONLY when both layers agree there is a problem.
     """
     print(f"Received: {json.dumps(event)}")
 
@@ -212,32 +212,27 @@ def lambda_handler(event, context):
     threshold_alerts = check_thresholds(event)
 
     # ── Step 4: Two-layer decision ───────────────────────────────────────
-    if threshold_alerts:
-        if is_anomaly and confidence in ("high", "medium"):
-            # Both layers agree — CRITICAL alert
-            send_alert(threshold_alerts, event,
-                       level="CRITICAL", score=score, confidence=confidence)
+    # CRITICAL alert is sent ONLY when both layers agree:
+    #   1. At least one sensor value breaches a safety threshold
+    #   2. The ML model also flags the reading as anomalous
+    # Everything else is logged but does NOT trigger an SNS notification.
 
-        elif is_anomaly and confidence == "low":
-            # Borderline — WARNING
-            send_alert(threshold_alerts, event,
-                       level="WARNING", score=score, confidence=confidence)
+    if threshold_alerts and is_anomaly:
+        # ── BOTH flags agree — genuine problem → CRITICAL alert ──────────
+        send_alert(threshold_alerts, event,
+                   level="CRITICAL", score=score, confidence=confidence)
 
-        else:
-            # Threshold breach but ML says normal — likely a noise spike
-            print(f"[INFO] Threshold breach suppressed by ML: {threshold_alerts}")
+    elif threshold_alerts:
+        # ── Threshold breach only, ML says normal — likely noise spike ───
+        print(f"[INFO] Threshold breach suppressed by ML: {threshold_alerts}")
 
-    elif is_anomaly and confidence == "high":
-        # ML flagged anomaly with no threshold breach — subtle pattern deviation
-        send_soft_alert(event, ml_result)
+    elif is_anomaly:
+        # ── ML-only anomaly, no threshold breach — log only ──────────────
+        print(f"[INFO] ML anomaly (confidence={confidence}, score={score:.4f}) "
+              f"but no threshold breach — logged only, no alert sent")
 
     else:
-        # Everything normal, or ML anomaly with low/medium confidence and no
-        # threshold breach — just log, no notification
-        if is_anomaly:
-            print(f"[INFO] ML anomaly (confidence={confidence}) but no threshold "
-                  f"breach — logged only")
-        else:
-            print("[OK] All readings normal")
+        # ── Everything normal ────────────────────────────────────────────
+        print("[OK] All readings normal")
 
     return {"statusCode": 200, "body": "OK"}
